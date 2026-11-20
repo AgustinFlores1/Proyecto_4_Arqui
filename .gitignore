@@ -20,3 +20,7 @@ module_stats/
 sim/sim
 *.vcd
 *.csv
+
+build/
+decisiones.csv
+!tb/practica.csv

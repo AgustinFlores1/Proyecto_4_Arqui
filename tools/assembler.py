@@ -1,0 +1,529 @@
+#!/usr/bin/env python3
+"""
+Assembler RV32E para Pochoco SoC / Espino Core.
+
+Uso:
+    python3 assembler.py sw/game.s -o sw/game.hex
+
+Salida: una palabra de 32 bits en hexadecimal (8 dígitos, minúscula) por línea,
+compatible con $readmemh en pochoco_ram.v.
+"""
+
+import argparse   # leer argumentos de la línea de comandos (archivo de entrada, -o salida)
+import re         # expresiones regulares: útil para separar "8(x6)" en offset y registro
+import sys        # sys.exit() con código de error si el .s tiene errores
+
+
+# ---------------------------------------------------------------------------
+# Errores
+# ---------------------------------------------------------------------------
+
+# Crear excepcion propia para manejar errores y reportarlos con numero de linea
+class AsmError(Exception):
+    """Error de ensamblado con número de línea, para mensajes claros."""
+    def __init__(self, line_no, msg):
+        super().__init__(f"línea {line_no}: {msg}")
+
+
+# ---------------------------------------------------------------------------
+# Tablas
+# ---------------------------------------------------------------------------
+
+# Intrucciones conocidas por el assembler y su codificación (opcode, funct3, funct7)
+# La valores para cada instrucción se puede ver en el decoder del core (rtl/espino_core/espino_decoder.v)
+INSTRUCTIONS = {
+    # mnem:    (formato, opcode, funct3, funct7)
+    # --- R: rd, rs1, rs2 ---  (OPCODE_OP = 7'h33, decoder líneas 151-165)
+    "add":   ("R",  0b0110011, 0b000, 0b0000000),
+    "sub":   ("R",  0b0110011, 0b000, 0b0100000),
+    "slt":   ("R",  0b0110011, 0b010, 0b0000000),
+    "sltu":  ("R",  0b0110011, 0b011, 0b0000000),
+    "xor":   ("R",  0b0110011, 0b100, 0b0000000),
+    "or":    ("R",  0b0110011, 0b110, 0b0000000),
+    "and":   ("R",  0b0110011, 0b111, 0b0000000),
+
+    # --- I aritméticas: rd, rs1, imm ---  (OPCODE_OPIMM = 7'h13, líneas 133-148)
+    "addi":  ("I",  0b0010011, 0b000, None),
+    "slti":  ("I",  0b0010011, 0b010, None),
+    "sltiu": ("I",  0b0010011, 0b011, None),
+    "xori":  ("I",  0b0010011, 0b100, None),
+    "ori":   ("I",  0b0010011, 0b110, None),
+    "andi":  ("I",  0b0010011, 0b111, None),
+
+    # --- I loads (y jalr): rd, imm(rs1) ---  (OPCODE_LOAD = 7'h03, líneas 168-184)
+    "lb":    ("IL", 0b0000011, 0b000, None),
+    "lh":    ("IL", 0b0000011, 0b001, None),
+    "lw":    ("IL", 0b0000011, 0b010, None),
+    "lbu":   ("IL", 0b0000011, 0b100, None),
+    "lhu":   ("IL", 0b0000011, 0b101, None),
+    "jalr":  ("IL", 0b1100111, 0b000, None),   # OPCODE_JALR = 7'h67, líneas 225-231
+
+    # --- S: rs2, imm(rs1) ---  (OPCODE_STORE = 7'h23, líneas 187-199)
+    "sb":    ("S",  0b0100011, 0b000, None),
+    "sh":    ("S",  0b0100011, 0b001, None),
+    "sw":    ("S",  0b0100011, 0b010, None),
+
+    # --- B: rs1, rs2, etiqueta ---  (OPCODE_BRANCH = 7'h63, líneas 202-215)
+    "beq":   ("B",  0b1100011, 0b000, None),
+    "bne":   ("B",  0b1100011, 0b001, None),
+    "blt":   ("B",  0b1100011, 0b100, None),
+    "bge":   ("B",  0b1100011, 0b101, None),
+    "bltu":  ("B",  0b1100011, 0b110, None),
+    "bgeu":  ("B",  0b1100011, 0b111, None),
+
+    # --- U: rd, imm ---  (OPCODE_LUI = 7'h37, OPCODE_AUIPC = 7'h17)
+    "lui":   ("U",  0b0110111, None, None),
+    "auipc": ("U",  0b0010111, None, None),
+
+    # --- J: rd, etiqueta ---  (OPCODE_JAL = 7'h6f, líneas 218-223)
+    "jal":   ("J",  0b1101111, None, None),
+
+    # Shifts (sll, srl, sra, slli, srli, srai) NO se incluyen
+}
+
+# Directivas que se aceptan pero se ignoran
+IGNORED_DIRECTIVES = {".section", ".text", ".global", ".globl"}
+
+
+# ---------------------------------------------------------------------------
+# Lectura del archivo
+# ---------------------------------------------------------------------------
+
+# Lee el archivo .s fuente y devuelve una lista con la linea y su numero correspondiente
+def read_source(path: str) -> list[tuple[int, str]]:
+    """Devuelve una lista de (numero_de_linea, texto) con las líneas del .s. fuente
+
+    Guarda el número de línea original para poder reportar errores"""
+    with open(path, "r", encoding="utf-8") as f:
+        return [(i, line) for i, line in enumerate(f, start=1)]
+
+
+# ---------------------------------------------------------------------------
+# Helpers (los implementas tú)
+# ---------------------------------------------------------------------------
+
+# Limpia cada linea de compentarios y espacios
+def clean_line(text: str) -> str:
+    """Quita comentarios (#) y espacios. Devuelve "" si no queda nada."""
+    return text.split('#')[0].strip()
+
+# Devuelve el numero asociado a un registro x0 -> 0
+def parse_register(tok: str, line_no: int) -> int:
+    """Recibe un registro que empieza con 'x' (x0...x15) y devuelve el número de registro (0..15). 
+    
+    Lanza AsmError si no es válido."""
+    tok = tok.strip()
+    if not (tok.startswith("x") and tok[1:].isdigit()):
+        raise AsmError(line_no, f"No se entrego un registro de forma 'x<numero>', Entregado: '{tok}'")
+    num = int(tok[1:])
+    if (num < 0 or num > 15):   # Revisa que este dentro del rango de registros de RV32E (x0..x15)
+        raise AsmError(line_no, f"Se intento acceder a un registro fuera de rango (0...15), Entregado: '{tok}'")
+    return num
+
+# Devuelve el valor entero de un inmediato en decimal, hexadecimal o binario
+def parse_immediate(tok: str, line_no: int, symbols: dict) -> int:
+    """Recibe un inmediato en decimal, hexadecimal (0x..) o binario (0b..) y devuelve su valor entero.
+    
+    Si 'tok' es una etiqueta, devuelve su valor desde symbols (que viene de first_pass).
+    
+    Lanza AsmError si no es válido. """
+
+    tok = tok.strip()
+    if tok in symbols.keys():
+        return symbols[tok]
+    try:
+        num = int(tok, 0)
+    except ValueError:
+        raise AsmError(line_no, f"Inmediato invalido, Entregado: '{tok}'")
+
+    return num
+
+# Devuelve el offset y el regiostro de un operando de memoria
+def parse_mem_operand(tok: str, line_no: int, symbols: dict) -> tuple[int, int]:
+    """Recibe un operando de memoria de la forma 'offset(register)' y devuelve una tupla (offset, register).
+    
+    Lanza AsmError si no es válido. """
+    tok = tok.strip()
+    mtch = re.fullmatch(r"(.+)\((.+)\)", tok) # Genera grupos de offset y register a partir del texto, por ejemplo "8(x6)" -> ("8", "x6")
+
+    if mtch is None:
+        raise AsmError(line_no, f"Se esperaba una direccion valida <offset>(<register>), Entregado: '{tok}'")
+
+    offset, register = mtch.groups()
+    
+    return (parse_immediate(offset, line_no, symbols), parse_register(register, line_no))
+
+# Revisa si un valor cabe en un número de bits dado, con o sin signo.
+def check_range(value: int, n_bits: int, signed: bool, line_no: int) -> None:
+    """Revisa si un valor cabe en un número de bits dado, con o sin signo.
+    
+    Lanza AsmError si value no cabe en 'bits' bits."""
+    if (signed):
+        limit = 2**(n_bits - 1)
+        if (value > limit - 1 or value < -limit):
+            raise AsmError(line_no, f"Valor fuera del rango del numero de bits permitidos ({-limit}, {limit - 1}), Entregado: {value}")
+    else:
+        limit = 2**n_bits - 1
+        if (value > limit or value < 0):
+            raise AsmError(line_no, f"Valor fuera del rango del numero de bits permitidos (0, {limit}), Entregado: {value}")
+
+
+# ---------------------------------------------------------------------------
+# Pasada 1: etiquetas
+# ---------------------------------------------------------------------------
+
+# Primera pasada del codigo fuente: devuelve un diccionario de etiquetas y una lista de instrucciones
+def first_pass(lines: list[tuple[int, str]]) -> tuple[dict[str, int], list[tuple[int, int, str, list[str]]]]:
+    """Recorre el código y devuelve:
+         labels:       {'loop': 0x0C, ...}
+         instructions: [(line_no, pc, mnemonic, [operandos]), ...]
+    """
+    labels: dict[str, int] = {}
+    instructions: list[tuple[int, int, str, list[str]]] = []
+    pc: int = 0
+
+    for line_no, line in lines:
+        cline = clean_line(line)
+        if cline == "":                 # Si la linea queda vacia, no hay nada que hacer
+            continue
+
+        if ":" in cline:                # Si hay ":", significa que hay una etiqueta.
+            items = cline.split(":", 1)
+            label = items[0].strip()
+            if (label == ""):
+                raise AsmError(line_no, "Se entrego una etiqueta vacia")
+            
+            elif (label in labels.keys()):
+                raise AsmError(line_no, f"Etiqueta '{label}' ya definida")
+            
+            labels[label] = pc         # La etiqueta apunta a la dirección actual del PC
+            cline = items[1].strip()   # Se obtiene la linea despues de la etiqueta, que puede ser una instrucción o estar vacía
+            if cline == "":
+                continue
+
+        if cline.startswith("."):                       # Si la linea empieza con ".", es una directiva. Se ignoran las que están en IGNORED_DIRECTIVES
+            directive = cline.split(None, 1)[0]
+            if directive.strip() in IGNORED_DIRECTIVES:
+                continue
+            else:
+                raise AsmError(line_no, f"Se utiliza directiva no reconocida por el assembler: '{directive}'") 
+
+        parts = cline.split(None, 1) # Se separa instruccion de sus operandos. Por ejemplo "add x1, x2, x3" -> ["add", "x1, x2, x3"]
+        if len(parts) == 1:
+            operators = []
+        else:
+            operators = [op.strip() for op in parts[1].split(",")]
+        mnemonic = parts[0].strip().lower()                         # Las instrucciones no distinguen entre mayúsculas y minúsculas
+        instructions.append((
+            line_no,
+            pc,
+            mnemonic,
+            operators
+        ))
+        pc += 4
+        
+    return labels, instructions
+
+
+# ---------------------------------------------------------------------------
+# Pasada 2: codificación
+# ---------------------------------------------------------------------------
+
+# Codifica una instrucción en un entero de 32 bits según su formato (R, I, S, B, U, J)
+# Se generan mascaras para los inmediatos para considerar solo sus bits efectivos, y se desplazan los campos a su posición correcta según el formato de la instrucción.
+def encode_r(opcode, f3, f7, rd, rs1, rs2):
+    return (f7 << 25 | rs2 << 20 | rs1 << 15 | f3 << 12 | rd << 7 | opcode)
+
+def encode_i(opcode, f3, rd, rs1, imm):
+    return ((imm & 0xFFF) << 20 | rs1 << 15 | f3 << 12 | rd << 7 | opcode)
+
+# Para instrucciones cuyos bits no se ocupan continuamente, se desplazan primero los bits a su posición correcta y luego se combinan con sus mascaras y OR.
+def encode_s(opcode, f3, rs1, rs2, imm):
+    return (((imm >> 5) & 0x7F) << 25 | rs2 << 20 | rs1 << 15 | f3 << 12 | (imm & 0x1F) << 7 | opcode)
+
+def encode_b(opcode, f3, rs1, rs2, offset):
+    return (((offset >> 12) & 0x1) << 31 | ((offset >> 5) & 0x3F) << 25 | rs2 << 20 | rs1 << 15 | f3 << 12 | ((offset >> 1) & 0xF) << 8 | ((offset >> 11) & 0x1) << 7 | opcode)
+
+def encode_u(opcode, rd, imm):
+    return ((imm & 0xFFFFF) << 12 | rd << 7 | opcode)
+
+def encode_j(opcode, rd, offset):
+    return (((offset >> 20) & 0x1) << 31 | ((offset >> 1)& 0x3FF) << 21 | ((offset >> 11) & 0x1) << 20 | ((offset >> 12) & 0xFF) << 12 | rd << 7 |opcode)
+
+
+# Traduce pseudo-instrucciones a instrucciones reales.
+def expand_pseudo(mnem: str, ops: list, line_no: int) -> tuple[str, list]:
+    """Traduce pseudo-instrucciones a instrucciones reales.
+    Si mnem no es una pseudo-instrucción, la devuelve sin cambios.
+    """
+    if mnem == "j":                      # j etiqueta      →  jal x0, etiqueta
+        if len(ops) != 1:
+            raise AsmError(line_no, f"'j' espera 1 operando (etiqueta), recibió {len(ops)}")
+        return "jal", ["x0", ops[0]]
+
+    if mnem == "nop":                    # nop             →  addi x0, x0, 0
+        if len(ops) != 0:
+            raise AsmError(line_no, f"'nop' no lleva operandos, recibió {len(ops)}")
+        return "addi", ["x0", "x0", "0"]
+
+    if mnem == "mv":                     # mv rd, rs       →  addi rd, rs, 0
+        if len(ops) != 2:
+            raise AsmError(line_no, f"'mv' espera 2 operandos, recibió {len(ops)}")
+        return "addi", [ops[0], ops[1], "0"]
+
+    return mnem, ops
+
+# Calcula la direccion de una etiquera relativa a la instruccion actual.
+def resolve_target(operand: str, pc: int, labels: dict[str, int], line_no: int) -> int:
+    """Devuelve la dirección de una etiqueta relativa a la instrucción actual. 
+    
+    Lanza AsmError si no existe."""
+    if operand not in labels:
+        raise AsmError(line_no, f"Etiqueta '{operand}' no definida")
+    return labels[operand] - pc
+
+def second_pass(instructions: list[tuple[int, int, str, list[str]]], labels: dict[str, int]) -> list[int]:
+    """Recibe la lista de instrucciones y las etiquetas, y devuelve una lista de enteros de 32 bits, uno por instrucción.
+    
+    Lanza AsmError si hay errores de sintaxis, semántica o si se entregan valores desconocidos y/o invalidos."""
+    words = []
+
+    for (line_no, pc, mnem, ops) in instructions:
+        mnem, ops = expand_pseudo(mnem, ops, line_no) # Transforma a instrucciones reales si es pseudo-instrucción
+
+        if mnem not in INSTRUCTIONS:
+            raise AsmError(line_no, f"Instruccion desconocida: '{mnem}'")
+
+        association, opcode, f3, f7 = INSTRUCTIONS[mnem]
+
+        n_ops = len(ops)    # Numero de operando que vienen con la instruccion 
+        word: int           # Se inicializa la variable que contendra la instruccion codificada en 32 bits
+        match association:
+            case "R":
+                if n_ops != 3:
+                    raise AsmError(line_no, f"{mnem} espera 3 operandos, recibio {n_ops}")
+                rd = parse_register(ops[0], line_no)
+                rs1 = parse_register(ops[1], line_no)
+                rs2 = parse_register(ops[2], line_no)
+                word = encode_r(opcode, f3, f7, rd, rs1, rs2)
+
+            case "I":
+                if n_ops != 3:
+                    raise AsmError(line_no, f"{mnem} espera 3 operandos, recibio {n_ops}")
+                rd = parse_register(ops[0], line_no)
+                rs1 = parse_register(ops[1], line_no)
+                imm = parse_immediate(ops[2], line_no, {})
+                check_range(imm, 12, True, line_no)
+                word = encode_i(opcode, f3, rd, rs1, imm)
+
+            case "IL":
+                if n_ops != 2:
+                    raise AsmError(line_no, f"{mnem} espera 2 operandos, recibio {n_ops}")
+                rd = parse_register(ops[0], line_no)
+                imm, rs1 = parse_mem_operand(ops[1], line_no, {})
+                check_range(imm, 12, True, line_no)
+                word = encode_i(opcode, f3, rd, rs1, imm)
+
+            case "S":
+                if n_ops != 2:
+                    raise AsmError(line_no, f"{mnem} espera 2 operandos, recibio {n_ops}")
+                rs2 = parse_register(ops[0], line_no)
+                imm, rs1 = parse_mem_operand(ops[1], line_no, {})
+                check_range(imm, 12, True, line_no)
+                word = encode_s(opcode, f3, rs1, rs2, imm)
+
+            case "B":
+                if n_ops != 3:
+                    raise AsmError(line_no, f"{mnem} espera 3 operandos, recibio {n_ops}")
+                rs1 = parse_register(ops[0], line_no)
+                rs2 = parse_register(ops[1], line_no)
+                offset = resolve_target(ops[2], pc, labels, line_no)
+                check_range(offset, 13, True, line_no)
+                word = encode_b(opcode, f3, rs1, rs2, offset)
+
+            case "U":
+                if n_ops != 2:
+                    raise AsmError(line_no, f"{mnem} espera 2 operandos, recibio {n_ops}")
+                rd = parse_register(ops[0], line_no)
+                imm = parse_immediate(ops[1], line_no, {})
+                check_range(imm, 20, False, line_no)
+                word = encode_u(opcode, rd, imm)
+
+            case "J":
+                if n_ops != 2:
+                    raise AsmError(line_no, f"{mnem} espera 2 operandos, recibio {n_ops}")
+                rd = parse_register(ops[0], line_no)
+                offset = resolve_target(ops[1], pc, labels, line_no)
+                check_range(offset, 21, True, line_no)
+                word = encode_j(opcode, rd, offset)
+                
+            case _:
+                raise AsmError(line_no, f"Tipo de instrucción desconocido: '{association}'")
+
+        words.append(word)
+    return words
+
+
+# ---------------------------------------------------------------------------
+# Salida
+# ---------------------------------------------------------------------------
+
+# Escribe las instrucciones en un archivo .hex (path) como 8 digitos hexadecimales por linea
+def write_hex(words, path):
+    with open(path, "w", encoding="utf-8") as f:
+        for w in words:
+            f.write(f"{w & 0xFFFFFFFF:08x}\n")   # 8 dígitos hex, minúscula
+
+def write_verilog_rom(words, path):
+    """Genera una ROM combinacional Verilog a partir de las instrucciones."""
+
+    if len(words) > 256:
+        raise ValueError(f"El programa contiene {len(words)} instrucciones; la ROM admite como máximo 256.")
+
+    addr_width = max(1, (len(words) - 1).bit_length())
+    addr_msb = addr_width + 1
+
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("// AUTO-GENERATED by assembler.py. Do not edit manually.\n")
+        f.write(f"// Program size: {len(words)} instructions ({len(words) * 4} bytes).\n\n")
+
+        f.write("module game_rom (\n")
+        f.write("    input  wire [31:0] addr_i,\n")
+        f.write("    output reg  [31:0] rdata_o\n")
+        f.write(");\n\n")
+
+        f.write("    always @* begin\n")
+        f.write(f"        case (addr_i[{addr_msb}:2])\n")
+
+        for i, word in enumerate(words):
+            f.write(f"{addr_width}'d{i}: rdata_o = 32'h{word & 0xFFFFFFFF:08x};\n"
+            )
+
+        # addi x0, x0, 0 = NOP
+        f.write("            default: rdata_o = 32'h00000013;\n")
+        f.write("        endcase\n")
+        f.write("    end\n\n")
+        f.write("endmodule\n")
+
+def write_verilog_ff_memory(words, path):
+    """Genera una memoria unificada implementable con flip-flops."""
+
+    if len(words) > 256:
+        raise ValueError(
+            f"El programa contiene {len(words)} instrucciones; "
+            "la memoria admite como máximo 256."
+        )
+
+    num_words = len(words)
+    addr_width = max(1, (num_words - 1).bit_length())
+    addr_msb = addr_width + 1
+
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("// AUTO-GENERATED by assembler.py. Do not edit manually.\n")
+        f.write(f"// Unified FF memory: {num_words} words ({num_words * 4} bytes).\n\n")
+
+        f.write("module game_mem_ff (\n")
+        f.write("    input  wire        clk_i,\n")
+        f.write("    input  wire        rst_ni,\n\n")
+
+        f.write("    input  wire        a_req_i,\n")
+        f.write("    input  wire [31:0] a_addr_i,\n")
+        f.write("    output reg  [31:0] a_rdata_o,\n\n")
+
+        f.write("    input  wire        b_req_i,\n")
+        f.write("    input  wire        b_we_i,\n")
+        f.write("    input  wire [3:0]  b_be_i,\n")
+        f.write("    input  wire [31:0] b_addr_i,\n")
+        f.write("    input  wire [31:0] b_wdata_i,\n")
+        f.write("    output reg  [31:0] b_rdata_o\n")
+        f.write(");\n\n")
+
+        f.write(f"    localparam NUM_WORDS = {num_words};\n\n")
+
+        f.write(f"    wire [{addr_width - 1}:0] a_word;\n")
+        f.write(f"    wire [{addr_width - 1}:0] b_word;\n\n")
+
+        f.write(f"    assign a_word = a_addr_i[{addr_msb}:2];\n")
+        f.write(f"    assign b_word = b_addr_i[{addr_msb}:2];\n\n")
+
+        f.write(f"    reg [31:0] mem [0:{num_words - 1}];\n\n")
+
+        f.write("    always @(posedge clk_i) begin\n")
+        f.write("        if (!rst_ni) begin\n")
+        f.write("            a_rdata_o <= 32'b0;\n")
+        f.write("            b_rdata_o <= 32'b0;\n\n")
+
+        for i, word in enumerate(words):
+            f.write(
+                f"            mem[{i}] <= "
+                f"32'h{word & 0xFFFFFFFF:08x};\n"
+            )
+
+        f.write("\n")
+        f.write("        end else begin\n\n")
+
+        f.write("            if (a_req_i) begin\n")
+        f.write("                if (a_word < NUM_WORDS)\n")
+        f.write("                    a_rdata_o <= mem[a_word];\n")
+        f.write("                else\n")
+        f.write("                    a_rdata_o <= 32'h00000013;\n")
+        f.write("            end\n\n")
+
+        f.write("            if (b_req_i) begin\n")
+        f.write("                if (b_we_i && (b_word < NUM_WORDS)) begin\n")
+        f.write("                    if (b_be_i[0]) mem[b_word][7:0]   <= b_wdata_i[7:0];\n")
+        f.write("                    if (b_be_i[1]) mem[b_word][15:8]  <= b_wdata_i[15:8];\n")
+        f.write("                    if (b_be_i[2]) mem[b_word][23:16] <= b_wdata_i[23:16];\n")
+        f.write("                    if (b_be_i[3]) mem[b_word][31:24] <= b_wdata_i[31:24];\n")
+        f.write("                end\n\n")
+
+        f.write("                if (b_word < NUM_WORDS)\n")
+        f.write("                    b_rdata_o <= mem[b_word];\n")
+        f.write("                else\n")
+        f.write("                    b_rdata_o <= 32'b0;\n")
+        f.write("            end\n")
+
+        f.write("        end\n")
+        f.write("    end\n\n")
+        f.write("endmodule\n")
+
+# ---------------------------------------------------------------------------
+# main
+# ---------------------------------------------------------------------------
+
+def main():
+    ap = argparse.ArgumentParser(description="Assembler RV32E para Pochoco SoC")  # Genera parser de argumentos de la línea de comandos
+    ap.add_argument("input", help="archivo .s de entrada")
+    ap.add_argument("-o", "--output", help="archivo .hex de salida (por defecto: mismo nombre .hex)")
+    ap.add_argument("--rom", help="archivo Verilog de salida para la ROM combinacional")
+    ap.add_argument("--ff-mem", help="archivo Verilog de salida para la memoria unificada con flip-flops")
+    args = ap.parse_args()
+
+    out_path = args.output or re.sub(r"\.s$", "", args.input) + ".hex"  # Obtiene el nombre del archivo de salida, si no se entrega, se reemplaza la extensión .s por .hex
+
+    try:
+        lines = read_source(args.input)
+        labels, instructions = first_pass(lines)
+        words = second_pass(instructions, labels)
+    except AsmError as e:                         # Si hay un error, imprime mensaje y no escribe el archivo de salida
+        print(f"error: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    write_hex(words, out_path)
+
+    if args.rom:
+        write_verilog_rom(words, args.rom)
+
+    if args.ff_mem:
+        write_verilog_ff_memory(words, args.ff_mem)
+
+    print(f"{len(words)} instrucciones -> {out_path}")
+
+    if args.rom:
+        print(f"ROM Verilog -> {args.rom}")
+
+    if args.ff_mem:
+        print(f"Memoria FF Verilog -> {args.ff_mem}")
+
+if __name__ == "__main__": # Si se ejecuta directamente, se llama a main(), sino se ignora (por ejemplo si se importa desde test_game.py)
+    main()
