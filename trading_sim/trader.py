@@ -22,23 +22,24 @@ class Trader:
         self.peak_wealth: int = _initial_capital  # Highest wealth achieved
         self.max_wealth_drop: int = 0             # Highest drop in money from peak
 
+    def get_decision(self) -> int:
+        return self.decision
+    
     def recieve_price(self, stock_price: int) -> int:
         self.update_stats(stock_price)
 
         action, stock_quantity = self.make_decision(stock_price)
-        self.decision = self.action_to_bytes(action, stock_quantity)
+        self.decision = self._action_to_bytes(action, stock_quantity)
 
     def apply_purchase(self, purchased_stocks: int, price: int) -> None:
         self.cash -= purchased_stocks * price + self.commision
         self.stocks += purchased_stocks
         self.orders += 1
-        return
 
     def apply_sell(self, sold_stocks: int, price: int) -> None:
         self.cash += sold_stocks * price - self.commision
         self.stocks -= sold_stocks
         self.orders += 1
-        return
 
     def update_stats(self, price: int) -> None:
         self.wealth = self.cash + self.stocks * price
@@ -50,13 +51,19 @@ class Trader:
         if price_drop > self.max_wealth_drop:
             self.max_wealth_drop = price_drop
 
-    def make_decision(self) -> tuple[int, int]:
+    def make_decision(self, price: int) -> tuple[int, int]:
         """
         Cambia en cada subclase. Recibe el precio del tick y devuelve la
         intención (accion, cantidad), con accion en MANTENER/COMPRAR/VENDER
         y cantidad entre 0 y 63. No toca self.decision.
         """
         return (MANTENER, 0)
+
+    def print_stats(self) -> None:
+        print(f"{self.name}: patrimonio {self.wealth} | caja {self.cash} | acciones {self.stocks} | "
+              f"órdenes {self.orders} | comisiones {self.orders * self.commision} | "
+              f"pérdida máx {self.max_wealth_drop}")
+
 
     @staticmethod
     def _action_to_bytes(action: int, stock_quantity: int) -> int:
@@ -69,7 +76,3 @@ class Trader:
         
         return (action << 6) | stock_quantity
 
-    def print_stats(self) -> None:
-        print(f"{self.name}: patrimonio {self.wealth} | caja {self.cash} | acciones {self.stocks} | "
-              f"órdenes {self.orders} | comisiones {self.orders * self.commision} | "
-              f"pérdida máx {self.max_wealth_drop}")
