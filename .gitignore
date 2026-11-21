@@ -24,3 +24,4 @@ sim/sim
 build/
 decisiones.csv
 !tb/practica.csv
+graficos/

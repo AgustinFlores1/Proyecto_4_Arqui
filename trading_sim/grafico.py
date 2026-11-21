@@ -1,27 +1,33 @@
 """
-Gráfico del mercado y del desempeño de los traders.
+Gráficos del mercado y del desempeño de los traders.
 
-Dos paneles que comparten el eje de los ticks:
-  arriba  el precio de la acción (la "línea de mercado")
-  abajo   el patrimonio de cada trader en cada tick
-Las referencias (no operar, comprar y mantener) van en gris punteado para que
-no compitan con los algoritmos; cada algoritmo tiene un color fijo.
+Genera un archivo por familia de algoritmos. Cada archivo tiene:
+  arriba  el precio de la acción (la "línea de mercado"), igual en todos
+  abajo   el patrimonio de cada trader de esa familia en cada tick, junto a las
+          referencias (no operar, comprar y mantener) en gris
+Todos los archivos usan la misma escala de patrimonio, así se pueden comparar.
 """
 
+import unicodedata
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 
 from trader import Trader
 
-# Colores categóricos en orden fijo (validados para daltonismo); uno por algoritmo
+# Colores categóricos en orden fijo (validados para daltonismo); dentro de cada gráfico se asignan en este orden
 COLORES = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"]
-GRIS_REFERENCIA = "#8a8a85"      # referencias (no operar, comprar y mantener)
+GRIS_REFERENCIA = "#8a8a85"              # referencias (no operar, comprar y mantener)
 ESTILOS_REFERENCIA = [":", "--", "-."]   # un tipo de línea distinto por referencia, en orden
-GRIS_PRECIO = "#3d3d3a"          # línea del precio
-TEXTO = "#3d3d3a"                # color de textos y ejes
-TEXTO_SECUNDARIO = "#77776f"     # etiquetas secundarias
-GRILLA = "#e6e6e1"               # grilla recesiva
+GRIS_PRECIO = "#3d3d3a"                  # línea del precio
+TEXTO = "#3d3d3a"                        # color de títulos y valores
+TEXTO_SECUNDARIO = "#77776f"             # etiquetas de ejes
+GRILLA = "#e6e6e1"                       # grilla recesiva
+
+
+def _nombre_archivo(familia: str) -> str:  # convierte "Reversión a la media" en "reversion_a_la_media"
+    sin_tildes = unicodedata.normalize("NFKD", familia).encode("ascii", "ignore").decode()
+    return "_".join(sin_tildes.lower().split())
 
 
 def _separar_etiquetas(valores: list[float], separacion: float) -> list[float]:  # mueve las etiquetas finales para que no se encimen
@@ -33,72 +39,93 @@ def _separar_etiquetas(valores: list[float], separacion: float) -> list[float]: 
     return posiciones
 
 
-def graficar(precios: list[int], traders: list[Trader], referencias: set[str], capital_inicial: int,
-             ruta: str | Path, mostrar: bool = True) -> None:  # dibuja los dos paneles y guarda la imagen en 'ruta'
-    """
-    precios          serie de precios (uno por tick)
-    traders          traders ya simulados (cada uno con su wealth_history)
-    referencias      nombres de los traders que son referencia (se dibujan en gris)
-    capital_inicial  caja inicial, para la línea horizontal de "no ganar ni perder"
-    ruta             dónde guardar el PNG
-    mostrar          si True, además abre la ventana del gráfico
-    """
-    ticks = range(len(precios))                                      # eje x común
+def _estilo_recesivo(ax) -> None:  # grilla suave y sin bordes superior ni derecho
+    ax.grid(axis="y", color=GRILLA, linewidth=0.8)
+    ax.set_axisbelow(True)
+    for lado in ("top", "right"):
+        ax.spines[lado].set_visible(False)
+    for lado in ("left", "bottom"):
+        ax.spines[lado].set_color(GRILLA)
+    ax.tick_params(colors=TEXTO_SECUNDARIO, labelsize=9)
+
+
+def _grafico_familia(precios: list[int], familia: str, traders: list[Trader], referencias: list[Trader],
+                     capital_inicial: int, limites: tuple[float, float]):  # arma la figura de una familia y la devuelve
+    n_ticks = len(precios)                                           # largo de la serie
+    minimo, maximo = limites                                         # escala de patrimonio común a todos los gráficos
+    rango = maximo - minimo
+
     fig, (ax_precio, ax_patrimonio) = plt.subplots(
         2, 1, figsize=(13, 8), sharex=True, gridspec_kw={"height_ratios": [1, 2]})
+    fig.suptitle(familia, x=0.01, ha="left", color=TEXTO, fontsize=13)
 
-    # --- Panel 1: línea de mercado ---------------------------------------
-    ax_precio.plot(ticks, precios, color=GRIS_PRECIO, linewidth=0.8)
+    # --- Línea de mercado ------------------------------------------------
+    ax_precio.plot(range(n_ticks), precios, color=GRIS_PRECIO, linewidth=0.8)
     ax_precio.set_title("Precio de la acción", loc="left", color=TEXTO, fontsize=11)
     ax_precio.set_ylabel("Precio", color=TEXTO_SECUNDARIO)
 
-    # --- Panel 2: patrimonio de cada trader -------------------------------
+    # --- Patrimonio ------------------------------------------------------
     ax_patrimonio.axhline(capital_inicial, color=GRILLA, linewidth=1.5, zorder=0)
-    finales, colores_finales, nombres_finales = [], [], []          # datos para las etiquetas al final de cada línea
-    color_siguiente = 0                                              # próximo color categórico libre
-    estilo_siguiente = 0                                             # próximo estilo de referencia libre
-    for trader in traders:
-        if trader.name in referencias:
-            color, grosor = GRIS_REFERENCIA, 1.2                     # referencia: gris, con su propio tipo de línea
-            estilo = ESTILOS_REFERENCIA[estilo_siguiente % len(ESTILOS_REFERENCIA)]
-            estilo_siguiente += 1
-        else:
-            color, estilo, grosor = COLORES[color_siguiente % len(COLORES)], "-", 1.4
-            color_siguiente += 1
-        ax_patrimonio.plot(ticks, trader.wealth_history, color=color, linestyle=estilo,
+    lineas = []                                                      # (trader, color, estilo, grosor) de cada línea
+    for i, ref in enumerate(referencias):
+        lineas.append((ref, GRIS_REFERENCIA, ESTILOS_REFERENCIA[i % len(ESTILOS_REFERENCIA)], 1.1))
+    for i, trader in enumerate(traders):
+        lineas.append((trader, COLORES[i % len(COLORES)], "-", 1.4))
+
+    for trader, color, estilo, grosor in lineas:
+        ax_patrimonio.plot(range(n_ticks), trader.wealth_history, color=color, linestyle=estilo,
                            linewidth=grosor, label=trader.name)
-        finales.append(trader.wealth_history[-1])
-        colores_finales.append(color)
-        nombres_finales.append(trader.name)
 
     # Valor final al lado de cada línea (el color va en un marcador, el texto en gris)
-    rango = max(max(t.wealth_history) for t in traders) - min(min(t.wealth_history) for t in traders)
+    finales = [t.wealth_history[-1] for t, *_ in lineas]             # patrimonio final de cada línea
     posiciones = _separar_etiquetas(finales, separacion=rango * 0.045)
-    x_final = len(precios) - 1                                       # último tick
-    for valor, y, color in zip(finales, posiciones, colores_finales):
-        ax_patrimonio.plot([x_final], [valor], marker="o", markersize=4, color=color)
-        ax_patrimonio.annotate(f"{valor:,}".replace(",", "."), xy=(x_final, y),
-                               xytext=(8, 0), textcoords="offset points",
-                               va="center", fontsize=9, color=TEXTO)
+    for (trader, color, *_), valor, y in zip(lineas, finales, posiciones):
+        ax_patrimonio.plot([n_ticks - 1], [valor], marker="o", markersize=4, color=color)
+        ax_patrimonio.annotate(f"{valor:,}".replace(",", "."), xy=(n_ticks - 1, y), xytext=(8, 0),
+                               textcoords="offset points", va="center", fontsize=9, color=TEXTO)
 
     ax_patrimonio.set_title("Patrimonio de cada trader", loc="left", color=TEXTO, fontsize=11)
     ax_patrimonio.set_ylabel("Patrimonio ($)", color=TEXTO_SECUNDARIO)
     ax_patrimonio.set_xlabel("Tick", color=TEXTO_SECUNDARIO)
-    ax_patrimonio.legend(loc="upper left", bbox_to_anchor=(1.06, 1), frameon=False, fontsize=9)
+    ax_patrimonio.set_ylim(minimo - rango * 0.04, maximo + rango * 0.06)
+    ax_patrimonio.legend(loc="upper left", bbox_to_anchor=(1.07, 1), frameon=False, fontsize=9)
 
-    # Estilo recesivo: grilla suave, sin bordes superiores ni derechos
     for ax in (ax_precio, ax_patrimonio):
-        ax.grid(axis="y", color=GRILLA, linewidth=0.8)
-        ax.set_axisbelow(True)
-        for lado in ("top", "right"):
-            ax.spines[lado].set_visible(False)
-        for lado in ("left", "bottom"):
-            ax.spines[lado].set_color(GRILLA)
-        ax.tick_params(colors=TEXTO_SECUNDARIO, labelsize=9)
-    ax_patrimonio.set_xlim(0, len(precios) * 1.06)                  # espacio a la derecha para las etiquetas
+        _estilo_recesivo(ax)
+    ax_patrimonio.set_xlim(0, n_ticks * 1.06)                       # espacio a la derecha para las etiquetas
 
     fig.tight_layout()
-    fig.savefig(ruta, dpi=150)
+    return fig
+
+
+def graficar(precios: list[int], grupos: dict[str, list[Trader]], referencias: list[Trader],
+             capital_inicial: int, carpeta: str | Path, mostrar: bool = True) -> list[Path]:  # un PNG por familia en 'carpeta'; devuelve las rutas
+    """
+    precios          serie de precios (uno por tick)
+    grupos           nombre de cada familia -> sus traders ya simulados
+    referencias      traders de referencia, que se repiten en gris en cada gráfico
+    capital_inicial  caja inicial, para la línea horizontal de "no ganar ni perder"
+    carpeta          dónde guardar los PNG (se crea si no existe)
+    mostrar          si True, además abre una ventana por gráfico (todas a la vez, al final)
+    """
+    carpeta = Path(carpeta)
+    carpeta.mkdir(parents=True, exist_ok=True)
+
+    todos = referencias + [t for ts in grupos.values() for t in ts]  # todos los traders, para fijar la escala común
+    limites = (min(min(t.wealth_history) for t in todos),            # patrimonio mínimo y máximo de todos
+               max(max(t.wealth_history) for t in todos))
+
+    rutas = []                                                       # archivos generados
+    figuras = []                                                     # figuras abiertas, para mostrarlas al final
+    for familia, traders in grupos.items():
+        fig = _grafico_familia(precios, familia, traders, referencias, capital_inicial, limites)
+        ruta = carpeta / f"{_nombre_archivo(familia)}.png"
+        fig.savefig(ruta, dpi=150)
+        rutas.append(ruta)
+        figuras.append(fig)
+
     if mostrar:
         plt.show()
-    plt.close(fig)
+    for fig in figuras:
+        plt.close(fig)
+    return rutas
