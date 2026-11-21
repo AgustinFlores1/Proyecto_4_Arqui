@@ -68,7 +68,7 @@ class Market:
         for tick, price in self.get_stock_prices_with_tick():
             for trader in self.traders:
                 self.execute_decision(trader, price)
-                trader.recieve_price(price)
+                trader.receive_price(price)
 
     def buy_and_hold_reference(self) -> int:
         """Referencia 'comprar y mantener' con la misma fórmula que imprime el testbench."""

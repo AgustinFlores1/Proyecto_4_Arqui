@@ -9,12 +9,14 @@ from algorithms.b_solo import BSolo
 from algorithms.b_calentamiento import BCalentamiento
 from algorithms.a2b_respaldo import A2BRespaldo
 from algorithms.a2b_reagrupada import A2BReagrupada
+from grafico import graficar
 
 INITIAL_CAPITAL_PER_TRADER = 10000   # caja inicial de cada trader
 COMISSION_PER_TRADE = 5              # comisión por orden ejecutada
 
 # Ruta del CSV armada desde la ubicación de este archivo: funciona desde cualquier carpeta
 SERIE = Path(__file__).resolve().parent.parent / "tb" / "practica.csv"
+GRAFICO = Path(__file__).resolve().parent / "desempeno.png"   # dónde se guarda el gráfico
 
 
 def main():  # arma el mercado, inserta los traders, corre la simulación e imprime los resultados
@@ -43,6 +45,11 @@ def main():  # arma el mercado, inserta los traders, corre la simulación e impr
           f"{market.buy_and_hold_reference()}")
     for trader in traders:
         trader.print_stats()
+
+    graficar(market.stock_prices, traders,
+             referencias={"No operar", "Comprar y mantener"},
+             capital_inicial=INITIAL_CAPITAL_PER_TRADER, ruta=GRAFICO)
+    print(f"Gráfico guardado en {GRAFICO}")
 
 
 if __name__ == "__main__":
