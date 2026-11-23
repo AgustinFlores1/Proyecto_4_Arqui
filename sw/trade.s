@@ -1,31 +1,108 @@
-# trade.s: loop mínimo del Pochoco Trader.
-#
-# Espera cada precio que llega por SPI, lo lee y responde siempre "mantener"
-# (DECISION = 0x00). Sirve para probar el protocolo con la FPGA maestra y el
-# testbench antes de implementar el algoritmo.
-#
+# Registros:
+#   x5:  Contador de precios en ventana de aprendizaje (0 -> 32)
+#   x6:  Flag si tiene acciones (comprado = 0 o 1)
+#   x7:  Temporal
+#   x8:  Temporal
+#   x9:  Temporal
+#   x10: Base del SPI slave (0x8001_0000)
+#   x11: Base del buffer (0x400 -> 0x47F)
+#   x12: Idx de posicion en buffer
+#   x13: Precio recibido en el tick
+#   x14: S_c -> Suma de los ultimos 8 precios
+#   x15: S_l -> Suma de los ultimos 32 precios
+
 # Mapa de memoria (README de Pochoco):
-#   0x8001_0000  SPI STATUS    bit 0 = hay precio nuevo, bit 1 = CS activo
-#   0x8001_0004  SPI PRICE     leerlo baja el bit "precio nuevo"
-#   0x8001_0008  SPI DECISION  byte que la maestra lee en la próxima transacción
+#   0x8001_0000 [0(x10)] SPI STATUS    bit 0 = hay precio nuevo, bit 1 = CS activo
+#   0x8001_0004 [4(x10)] SPI PRICE     leerlo baja el bit "precio nuevo"
+#   0x8001_0008 [8(x10)] SPI DECISION  byte que la maestra lee en la próxima transacción
 #   0x8000_0000  7 segmentos   (depuración: muestra el precio en hexadecimal)
 #
-# Registros:
-#   x10  base del SPI slave
-#   x11  base de los periféricos (7 segmentos)
-#   x12  STATUS leído
-#   x13  precio recibido
 
-        lui   x10, 0x80010          # x10 = 0x8001_0000
-        lui   x11, 0x80000          # x11 = 0x8000_0000
+# inicio:      cargar bases, poner en 0 el buffer, S_c = S_l = 0, idx = 0, contador = 0, comprado = 0
+# esperar:     leer STATUS; si bit 0 = 0, volver a esperar
+#             leer PRICE → p
+# actualizar:  viejo32 = buffer[idx];  viejo8 = buffer[(idx+96) AND 124]
+#             buffer[idx] = p;  idx = (idx+4) AND 124
+#             S_l += p − viejo32;  S_c += p − viejo8
+# calentar:    contador++; si contador < 32 → decisión = 0x00, ir a escribir
+# decidir:     D = 4·S_c − S_l; elegir 0x7F / 0xBF / 0x00 según D y comprado
+# escribir:    guardar decisión en DECISION (siempre); volver a esperar
+
+inicio:
+        addi  x5, x0, 0          # cont = 0
+        addi  x6, x0, 0          # comprado = 0
+        lui   x10, 0x80010       # spi = 0x8001_0000
+        addi  x11, x0, 0x400     # buf = 0x400
+        addi  x12, x0, 0         # idx = 0
+        addi  x13, x0, 0         # p = 0
+        addi  x14, x0, 0         # S_c = 0
+        addi  x15, x0, 0         # S_l = 0
+        addi  x7, x0, 128        # límite de limpiar: 32 posiciones × 4 bytes
+
+limpiar:
+        add   x8, x11, x12       # dirección = buf + idx
+        sw    x0, 0(x8)          # buffer[idx] = 0
+        addi  x12, x12, 4        # siguiente posición
+        bne   x12, x7, limpiar   # hasta llegar a 128
+        addi  x12, x0, 0         # idx vuelve a 0
 
 esperar:
-        lw    x12, 0(x10)           # STATUS
-        andi  x12, x12, 1           # ¿hay precio nuevo?
-        beq   x12, x0, esperar      # no: seguir esperando
+        lw    x7, 0(x10)         # STATUS
+        andi  x7, x7, 1          # bit 0: new_price
+        beq   x7, x0, esperar    # sin precio nuevo: seguir esperando
+        lw    x13, 4(x10)        # p = PRICE (new_price vuelve a 0)
 
-        lw    x13, 4(x10)           # precio (baja el bit "precio nuevo")
-        sw    x13, 0(x11)           # 7 segmentos = precio en hex
+actualizar:
+        add   x7, x11, x12       # dirección del más viejo = buf + idx
+        lw    x8, 0(x7)          # viejo32 = buffer[idx]
 
-        sw    x0, 8(x10)            # DECISION = 0x00 (mantener)
-        j     esperar
+        addi  x9, x12, 96        # idx + 96 ...
+        andi  x9, x9, 124        # ... AND 124 = posición de hace 8 ticks
+        add   x9, x11, x9        # dirección = buf + esa posición
+        lw    x9, 0(x9)          # viejo8
+
+        sw    x13, 0(x7)         # buffer[idx] = new_price
+        addi  x12, x12, 4        # idx + 4
+        andi  x12, x12, 124      # idx = 0 si es que se da la vuelta (128)
+
+        sub   x14, x14, x9       # S_c -= viejo8
+        add   x14, x14, x13      # S_c += precio
+
+        sub   x15, x15, x8       # S_l -= viejo32
+        add   x15, x15, x13      # S_l += precio
+
+calentar:
+        addi x7, x0, 32
+        addi x9, x0, 0x00
+        bge  x5, x7, decidir
+
+        addi x5, x5, 1
+        blt  x5, x7, escribir
+
+decidir:
+        add x7, x14, x14         # S_c + S_c
+        add x7, x7, x7           # (S_c + S_c) * 2
+        sub x7, x7, x15          # D = 4 * S_c - S_l 
+
+        beq  x6, x0, sin_acciones
+
+con_acciones:
+        addi x8, x0, -64
+        bge  x7, x8, escribir    # D >= −64: no vender → mantener (x9 ya es 0)
+        addi x9, x0, 0xBF        # vender 63
+        addi x6, x0, 0           # comprado = 0
+        j escribir
+
+sin_acciones:
+        addi x8, x0, 64
+        bge  x8, x7, escribir
+        addi x9, x0, 0x7F
+        addi x6, x0, 1
+
+escribir:
+        sw   x9, 8(x10)
+        j    esperar
+
+
+                
+
