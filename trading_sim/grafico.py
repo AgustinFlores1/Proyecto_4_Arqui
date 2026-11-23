@@ -129,3 +129,22 @@ def graficar(precios: list[int], grupos: dict[str, list[Trader]], referencias: l
     for fig in figuras:
         plt.close(fig)
     return rutas
+
+
+def graficar_serie(precios: list[int], titulo: str, traders: list[Trader], referencias: list[Trader],
+                   capital_inicial: int, ruta: str | Path) -> None:  # guarda un gráfico con el precio y el patrimonio de unos traders en una serie
+    """
+    precios          serie de precios (uno por tick)
+    titulo           título del gráfico
+    traders          traders ya simulados que se dibujan en color
+    referencias      traders de referencia, en gris
+    capital_inicial  caja inicial, para la línea horizontal de "no ganar ni perder"
+    ruta             dónde guardar el PNG
+    """
+    todos = referencias + traders                                    # todos los traders del gráfico
+    limites = (min(min(t.wealth_history) for t in todos),            # escala de patrimonio de este gráfico
+               max(max(t.wealth_history) for t in todos))
+    fig = _grafico_familia(precios, titulo, traders, referencias, capital_inicial, limites)
+    Path(ruta).parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(ruta, dpi=150, bbox_inches="tight")                  # bbox_inches: que no se corte la leyenda
+    plt.close(fig)

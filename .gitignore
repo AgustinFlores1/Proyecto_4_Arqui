@@ -22,6 +22,6 @@ sim/sim
 *.csv
 
 build/
-decisiones.csv
 !tb/practica.csv
 graficos/
+graficos_barrido/
