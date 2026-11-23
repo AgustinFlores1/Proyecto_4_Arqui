@@ -6,10 +6,32 @@ from algorithms.herramientas import a_orden
 
 class DesviacionMedia(Trader):
     """
-    Reversión a la media con umbral fijo.
-    Supone que el precio oscila alrededor de su promedio reciente: si cae más de
-    'umbral' puntos bajo la media de los últimos N, compra (está "barato"), y
-    vende cuando el precio vuelve a la media (desviación ≥ salida).
+    Desviación de la media: comprar cuando el precio está "barato".
+
+    Qué es y qué hace
+    -----------------
+    Estrategia de reversión a la media: supone que el precio oscila alrededor
+    de su promedio reciente y que, si se aleja mucho, tiende a volver.
+
+    Calcula la media de los últimos N precios y mide cuánto se alejó el precio
+    actual de ella (desviación = precio - media). Si el precio está 'umbral'
+    puntos o más por debajo de la media, lo considera barato y compra. Vende
+    cuando el precio vuelve a la media, o la supera por 'salida' puntos.
+
+    El umbral es un número fijo de puntos. BandasDesviacion es la versión que
+    lo ajusta según qué tanto se mueve el precio.
+
+    Su punto débil: si el precio cae y no vuelve, sigue comprado esperando un
+    rebote que no llega, porque no tiene una regla para vender con pérdida.
+
+    Variables
+    ---------
+    N       ticks de la ventana de la media. Más chico: la media sigue al
+            precio de cerca y las desviaciones son pequeñas.
+    umbral  puntos bajo la media para comprar. Más grande: compra menos
+            veces, solo en caídas fuertes.
+    salida  vende cuando el precio supera la media por esta cantidad de
+            puntos. 0 = vende apenas vuelve a la media.
     """
 
     def __init__(self, _name: str, _initial_capital: int, _market_comission: int,

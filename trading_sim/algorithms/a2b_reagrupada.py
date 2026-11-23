@@ -7,22 +7,56 @@ from algorithms.herramientas import (nivel_rsi, mover_umbral, muestra_completa,
 
 class A2BReagrupada(Trader):
     """
-    A2 + B (reagrupada): la tabla de B no usa los 17 niveles, sino 3 zonas
-    definidas por los umbrales A2:
-      0 = baja  (nivel ≤ θ_bajo)
-      1 = media
-      2 = alta  (nivel ≥ θ_alto)
-    Con 3 casillas cada una junta muchas más muestras, así que aprende más
-    rápido. Mientras la zona no tenga C_min muestras, no opera.
+    A2 + B (reagrupada): aprende cuánto gana comprando en cada zona del RSI.
 
-    La zona se guarda en el tick en que se observa: como los umbrales se
-    mueven, recalcularla después la asignaría a una zona distinta.
+    Qué es y qué hace
+    -----------------
+    Combina dos ideas:
+      - A2: umbrales de RSI que se ajustan solos (ver A2Solo). Con ellos, el
+        nivel del RSI (0 a 16) se clasifica en 3 zonas:
+          0 = baja   (nivel <= theta_bajo)
+          1 = media
+          2 = alta   (nivel >= theta_alto)
+      - B: una tabla que aprende de la experiencia. Para cada zona guarda cuánto
+        subió o bajó el precio, en promedio, en los h ticks siguientes a haberla
+        visto. Si en esa zona comprar históricamente ganó, compra; si perdió,
+        vende.
+
+    Usar 3 zonas en vez de 17 niveles hace que cada casilla de la tabla junte
+    muchas más muestras y aprenda más rápido. Mientras la zona actual no tenga
+    C_min muestras, no opera.
+
+    La zona se anota en el tick en que se observa. Como los umbrales se mueven,
+    recalcularla después podría asignarla a una zona distinta.
+
+    Variables
+    ---------
+    N           ticks de la ventana del RSI.
+    h           horizonte: cuántos ticks después se mide el resultado de cada
+                muestra. Debería parecerse a cuánto tiempo se mantiene una compra.
+    M           memoria: la tabla usa solo las últimas M muestras y olvida las
+                más antiguas. Más grande: promedios más estables, adaptación lenta.
+    C_min       muestras mínimas en una zona para confiar en su promedio.
+    entrada     compra si el retorno promedio de la zona supera este valor
+                (puntos de precio por acción). Debería ser mayor que el costo
+                de las comisiones (~0,19).
+    salida      vende si el retorno promedio de la zona baja de este valor.
+                La diferencia entre entrada y salida evita comprar y vender seguido.
+    K           lentitud de los umbrales A2 (ver A2Solo).
+    theta_bajo  valor inicial del umbral que separa la zona baja.
+    theta_alto  valor inicial del umbral que separa la zona alta.
     """
 
     def __init__(self, _name: str, _initial_capital: int, _market_comission: int,
-                 N: int = 32, h: int = 8, M: int = 512, C_min: int = 20,
-                 entrada: float = 0.2, salida: float = 0.0,
-                 K: int = 64, theta_bajo: int = 5, theta_alto: int = 11) -> None:  # crea el trader con RSI, umbrales A2 y tabla de 3 zonas
+                 N: int = 32, 
+                 h: int = 8, 
+                 M: int = 512, 
+                 C_min: int = 20,
+                 entrada: float = 0.2, 
+                 salida: float = 0.0,
+                 K: int = 64, 
+                 theta_bajo: int = 5, 
+                 theta_alto: int = 11) -> None:  # crea el trader con RSI, umbrales A2 y tabla de 3 zonas
         
         super().__init__(_name, _initial_capital, _market_comission)
         

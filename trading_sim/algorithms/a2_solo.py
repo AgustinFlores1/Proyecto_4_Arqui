@@ -6,10 +6,33 @@ from algorithms.herramientas import nivel_rsi, mover_umbral, a_orden
 
 class A2Solo(Trader):
     """
-    A2 solo: RSI con umbrales que se adaptan solos (lectura de reversión).
-    Es igual al RSI fijo, pero θ_bajo y θ_alto no son constantes: siguen al
-    percentil 15 y 85 de los niveles recientes. No aprende de la ganancia,
-    solo de qué tan "raro" es el RSI actual.
+    A2 solo: RSI con umbrales que se ajustan solos.
+
+    Qué es y qué hace
+    -----------------
+    El RSI (índice de fuerza relativa) mide si en los últimos N ticks el precio
+    subió más de lo que bajó. Aquí se expresa como un nivel entero de 0 a 16:
+    0 significa que solo bajó, 16 que solo subió y 8 que subió y bajó lo mismo.
+
+    La idea es de reversión a la media: si el RSI está muy bajo, el precio cayó
+    "demasiado" y se espera un rebote, así que compra. Si está muy alto, vende.
+
+    A diferencia de RSIFijo, los umbrales que definen "muy bajo" y "muy alto" no
+    son constantes. Cada tick se mueven un poco según el nivel actual, hasta
+    quedar en el percentil 15 y 85 de los niveles recientes. Así se adaptan al
+    mercado: "muy bajo" significa "más bajo que el 85 % de lo que se vio
+    últimamente". No aprende de las ganancias, solo de qué tan raro es el RSI.
+
+    Variables
+    ---------
+    N           ticks de la ventana del RSI. Más grande: RSI más suave y lento.
+    K           lentitud de los umbrales: cuántos "empujones" se acumulan antes de
+                mover un umbral un nivel. Más grande: umbrales más estables pero
+                que tardan más en adaptarse.
+    theta_bajo  valor inicial del umbral de compra (nivel 0-16). Después se
+                mueve solo; compra si nivel <= theta_bajo.
+    theta_alto  valor inicial del umbral de venta (nivel 0-16). Después se
+                mueve solo; vende si nivel >= theta_alto.
     """
 
     def __init__(self, _name: str, _initial_capital: int, _market_comission: int,

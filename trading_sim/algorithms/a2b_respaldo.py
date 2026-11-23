@@ -7,16 +7,47 @@ from algorithms.herramientas import (nivel_rsi, mover_umbral, muestra_completa,
 
 class A2BRespaldo(Trader):
     """
-    A2 + B (respaldo): igual que B, pero mientras el nivel actual no tiene
-    C_min muestras, decide con umbrales A2 que se adaptan solos (lectura de
-    reversión: compra bajo θ_bajo, vende sobre θ_alto).
+    A2 + B (respaldo): aprende por nivel del RSI, con un plan B mientras aprende.
+
+    Qué es y qué hace
+    -----------------
+    Su forma principal de decidir es la tabla B (ver BCalentamiento): para cada
+    nivel del RSI (0 a 16) aprende cuánto se movió el precio, en promedio, en
+    los h ticks siguientes, y compra o vende según ese promedio.
+
+    El problema de la tabla es que al principio está vacía. Mientras el nivel
+    actual no tenga C_min muestras, en vez de no operar usa un respaldo: los
+    umbrales A2 que se ajustan solos (ver A2Solo), con la regla de reversión
+    "compra si el RSI está bajo, vende si está alto". Cuando el nivel junta
+    suficientes muestras, la tabla toma el control.
+
+    Variables
+    ---------
+    N           ticks de la ventana del RSI.
+    h           horizonte: cuántos ticks después se mide el resultado de cada muestra.
+    M           memoria: la tabla usa solo las últimas M muestras.
+    C_min       muestras mínimas en un nivel para usar la tabla en vez del respaldo.
+    entrada     compra si el retorno promedio del nivel supera este valor
+                (puntos por acción).
+    salida      vende si el retorno promedio del nivel baja de este valor.
+    K           lentitud de los umbrales A2 del respaldo.
+    theta_bajo  valor inicial del umbral de compra del respaldo.
+    theta_alto  valor inicial del umbral de venta del respaldo.
     """
 
     def __init__(self, _name: str, _initial_capital: int, _market_comission: int,
-                 N: int = 32, h: int = 8, M: int = 512, C_min: int = 20,
-                 entrada: float = 0.2, salida: float = 0.0,
-                 K: int = 64, theta_bajo: int = 5, theta_alto: int = 11) -> None:  # crea el trader con RSI, umbrales A2 y tabla B
+                 N: int = 32, 
+                 h: int = 8, 
+                 M: int = 512, 
+                 C_min: int = 20,
+                 entrada: float = 0.2, 
+                 salida: float = 0.0,
+                 K: int = 64, 
+                 theta_bajo: int = 5, 
+                 theta_alto: int = 11) -> None:  # crea el trader con RSI, umbrales A2 y tabla B
+        
         super().__init__(_name, _initial_capital, _market_comission)
+        
         self.C_min = C_min                       # muestras mínimas para confiar en un nivel
         self.entrada = entrada                   # compra si el promedio del nivel supera esto (puntos por acción)
         self.salida = salida                     # vende si el promedio del nivel baja de esto

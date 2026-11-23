@@ -6,17 +6,41 @@ from algorithms.herramientas import a_orden
 
 class BandasDesviacion(Trader):
     """
-    Reversión a la media con umbral adaptativo (Bollinger sin cuadrados).
-    Igual que DesviacionMedia, pero el umbral no es fijo: es k veces la
-    desviación absoluta media (MAD) de los últimos N precios. En un mercado
-    tranquilo la banda se angosta; en uno volátil se ensancha y exige una
-    caída más grande para comprar. Usa la MAD en vez de la desviación estándar
-    para no necesitar cuadrados ni raíces.
+    Bandas de desviación: comprar cuando el precio cae "más de lo normal".
+
+    Qué es y qué hace
+    -----------------
+    Estrategia de reversión a la media: supone que el precio tiende a volver a
+    su promedio reciente. Calcula la media de los últimos N precios y compra
+    cuando el precio actual está muy por debajo. Vende cuando vuelve a la media
+    (o un poco más arriba, según salida).
+
+    "Muy por debajo" no es un número fijo de puntos. Se mide en relación a qué
+    tanto se mueve el precio normalmente: la desviación absoluta media (MAD),
+    que es el promedio de qué tan lejos de la media estuvieron los últimos N
+    precios. En un mercado tranquilo la MAD es chica y basta una caída pequeña
+    para comprar; en uno agitado la MAD es grande y exige una caída mayor.
+
+    Es parecido a las bandas de Bollinger, pero usa la MAD en vez de la
+    desviación estándar para no necesitar cuadrados ni raíces (más fácil en
+    hardware).
+
+    Variables
+    ---------
+    N       ticks de la ventana con que se calculan la media y la MAD.
+    k       ancho de la banda: compra si el precio está k·MAD o más bajo la
+            media. Más grande: compra menos veces, solo en caídas fuertes.
+    salida  vende cuando el precio supera la media por esta cantidad de puntos.
+            0 = vende apenas vuelve a la media. Positivo: espera más ganancia.
     """
 
     def __init__(self, _name: str, _initial_capital: int, _market_comission: int,
-                 N: int = 32, k: float = 2.0, salida: float = 0.0) -> None:  # crea el trader con su ventana de precios
+                 N: int = 32, 
+                 k: float = 2.0, 
+                 salida: float = 0.0) -> None:  # crea el trader con su ventana de precios
+        
         super().__init__(_name, _initial_capital, _market_comission)
+        
         self.k = k                           # ancho de la banda, en unidades de MAD
         self.salida = salida                 # vende cuando la desviación llega a este valor (0 = vuelve a la media)
         self.precios = deque(maxlen=N)       # últimos N precios

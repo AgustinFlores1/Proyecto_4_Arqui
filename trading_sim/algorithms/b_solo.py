@@ -6,9 +6,27 @@ from algorithms.herramientas import nivel_rsi, muestra_completa, aprender, decid
 
 class BSolo(Trader):
     """
-    B solo: la tabla nivel -> retorno, sin calentamiento. Opera apenas el nivel
-    actual tiene al menos una muestra, aunque ese promedio sea muy ruidoso.
-    Sirve para ver cuánto aporta el calentamiento (comparar con BCalentamiento).
+    B solo: la tabla de BCalentamiento, pero sin calentamiento.
+
+    Qué es y qué hace
+    -----------------
+    Aprende igual que BCalentamiento: para cada nivel del RSI (0 a 16) guarda
+    cuánto se movió el precio, en promedio, en los h ticks siguientes, y compra
+    o vende según ese promedio.
+
+    La diferencia es que opera apenas el nivel actual tiene una sola muestra,
+    aunque ese promedio sea muy poco confiable. Existe para comparar: la
+    diferencia entre BSolo y BCalentamiento muestra cuánto aporta esperar a
+    tener suficientes datos.
+
+    Variables
+    ---------
+    N        ticks de la ventana del RSI.
+    h        horizonte: cuántos ticks después se mide el resultado de cada muestra.
+    M        memoria: la tabla usa solo las últimas M muestras.
+    entrada  compra si el retorno promedio del nivel supera este valor
+             (puntos por acción).
+    salida   vende si el retorno promedio del nivel baja de este valor.
     """
 
     def __init__(self, _name: str, _initial_capital: int, _market_comission: int,

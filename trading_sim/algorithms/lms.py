@@ -6,15 +6,43 @@ from algorithms.herramientas import muestra_completa, a_orden
 
 class LMS(Trader):
     """
-    Aprende del mercado: predictor lineal adaptativo (LMS).
-    Predice el retorno de los próximos h ticks como una suma ponderada de las
-    direcciones de los últimos k movimientos (+1 sube, 0 igual, -1 baja), más un
-    término constante (sesgo). Cada vez que conoce el resultado real, corrige los
-    pesos en la dirección que habría reducido el error.
+    LMS: predictor lineal que aprende a anticipar el precio.
 
-    Los pesos son el diagnóstico del mercado: si el peso del último movimiento
-    termina positivo, aprendió momentum; si termina negativo, aprendió reversión.
-    Es el mismo algoritmo que usan los canceladores de eco de los teléfonos.
+    Qué es y qué hace
+    -----------------
+    Intenta predecir cuántos puntos va a ganar si compra ahora y vende h ticks
+    después. Para eso mira la dirección de los últimos k movimientos del
+    precio: +1 si subió, 0 si quedó igual, -1 si bajó.
+
+    La predicción es una suma ponderada: cada dirección se multiplica por un
+    peso y se suman, más un término constante llamado sesgo. Si la predicción
+    supera 'entrada', compra; si baja de 'salida', vende.
+
+    Los pesos se aprenden solos. Cada vez que pasa el tiempo suficiente para
+    saber cuánto se movió realmente el precio, calcula el error de su
+    predicción y corrige cada peso un poco en la dirección que lo habría
+    reducido. Es el algoritmo LMS (least mean squares), el mismo que usan los
+    canceladores de eco de los teléfonos.
+
+    Los pesos finales dicen qué aprendió del mercado:
+      - peso del último movimiento positivo: "si subió, sigue subiendo" (momentum).
+      - negativo: "si subió, después baja" (reversión).
+      - sesgo positivo: el precio viene subiendo en general (tendencia).
+
+    Variables
+    ---------
+    k        cuántos movimientos pasados mira. Hay k + 1 pesos (uno por
+             movimiento más el sesgo). Más grande: puede detectar patrones
+             más largos, pero cada peso aprende con más ruido.
+    h        horizonte: predice el retorno de los próximos h ticks. Debería
+             parecerse a cuánto tiempo se mantiene una compra.
+    mu       velocidad de aprendizaje: cuánto se corrige cada peso por cada
+             error. Más grande: se adapta rápido pero los pesos persiguen el
+             ruido. Más chico: estable pero lento. La memoria es de
+             aproximadamente 1 / mu ticks.
+    entrada  compra si la predicción supera este valor (puntos por acción en
+             h ticks). Debería superar el costo de las comisiones (~0,19).
+    salida   vende si la predicción baja de este valor.
     """
 
     def __init__(self, _name: str, _initial_capital: int, _market_comission: int,

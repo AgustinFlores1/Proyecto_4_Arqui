@@ -6,13 +6,38 @@ from algorithms.herramientas import muestra_completa, aprender, decidir_con_tabl
 
 class Patrones(Trader):
     """
-    Aprende del mercado: tabla de patrones (tipo cadena de Markov).
-    Codifica los últimos k movimientos del precio (baja / igual / sube) como un
-    patrón, y para cada patrón aprende cuánto se movió el precio después, con la
-    misma tabla de B. Es la idea de un predictor de saltos de un procesador,
-    aplicada a precios: "después de [sube, sube, baja], ¿qué suele pasar?".
+    Patrones: aprende qué suele pasar después de cada secuencia de movimientos.
 
-    Hay 3^k patrones posibles (con k = 3, 27 casillas).
+    Qué es y qué hace
+    -----------------
+    Mira los últimos k movimientos del precio, cada uno como baja, igual o
+    sube, y los junta en un patrón. Por ejemplo, con k = 3: [sube, sube, baja].
+
+    Para cada patrón posible lleva una tabla con cuánto se movió el precio, en
+    promedio, en los h ticks siguientes a haberlo visto. Cuando aparece un
+    patrón, consulta su casilla: si históricamente comprar después de ese
+    patrón ganó, compra; si perdió, vende. Mientras el patrón no tenga C_min
+    muestras, no opera.
+
+    Es la misma tabla que usa BCalentamiento, pero la casilla es el patrón de
+    movimientos en vez del nivel del RSI. Es la idea de un predictor de saltos
+    de un procesador aplicada a precios: "después de [sube, sube, baja], ¿qué
+    suele pasar?".
+
+    Hay 3^k patrones posibles: con k = 3 son 27 casillas, con k = 5 ya son 243.
+
+    Variables
+    ---------
+    k        movimientos que forman un patrón. Más grande: patrones más
+             específicos, pero muchas más casillas y cada una junta menos
+             muestras.
+    h        horizonte: cuántos ticks después se mide el resultado de cada muestra.
+    M        memoria: la tabla usa solo las últimas M muestras y olvida las
+             antiguas.
+    C_min    muestras mínimas en un patrón para confiar en su promedio.
+    entrada  compra si el retorno promedio del patrón supera este valor
+             (puntos por acción). Debería superar el costo de las comisiones.
+    salida   vende si el retorno promedio del patrón baja de este valor.
     """
 
     def __init__(self, _name: str, _initial_capital: int, _market_comission: int,

@@ -1,6 +1,29 @@
 """
-Funciones auxiliares compartidas por los algoritmos.
-Cada una hace una sola cosa y no guarda estado: el estado vive en cada trader.
+Funciones auxiliares compartidas por varios algoritmos.
+
+Varios algoritmos usan las mismas piezas: calcular el RSI, mover un umbral
+adaptativo o llevar la tabla de aprendizaje de B. En vez de repetir ese código
+en cada clase, está aquí una sola vez.
+
+Cada función hace una sola cosa y no guarda nada entre llamadas: recibe el
+estado que necesita (ventanas, tablas, umbrales) y lo devuelve o lo modifica.
+El estado de cada algoritmo vive en su propio trader.
+
+Funciones
+---------
+nivel_rsi          RSI de una ventana de cambios de precio, como nivel entero
+                   de 0 a 16 (None si el precio no se movió).
+mover_umbral       A2: mueve un umbral un pequeño paso para que converja a un
+                   percentil de los niveles del RSI.
+muestra_completa   B: devuelve la muestra (casilla, retorno) cuyo resultado se
+                   acaba de conocer, h ticks después de observarla.
+aprender           B: agrega una muestra a la tabla y olvida la más antigua si
+                   la memoria está llena.
+decidir_con_tabla  B: decide comprar o vender según el retorno promedio de la
+                   casilla actual (None si todavía no hay datos suficientes).
+a_orden            convierte "quiero comprar o vender" en una orden concreta:
+                   compra 63 solo si no tiene acciones, vende todas solo si
+                   tiene (todo o nada).
 """
 
 from collections import deque

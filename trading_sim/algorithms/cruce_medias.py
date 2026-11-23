@@ -6,15 +6,45 @@ from algorithms.herramientas import a_orden
 
 class CruceMedias(Trader):
     """
-    Seguimiento de tendencia: cruce de medias móviles (SMA).
-    Compara el promedio de los últimos N_corta precios (el precio "reciente")
-    con el de los últimos N_larga (el "nivel de fondo"). Si la media corta está
-    sobre la larga, el precio viene subiendo: compra. Si está bajo, vende.
-    El margen crea una zona muerta (histéresis) para no entrar y salir seguido.
+    Cruce de medias móviles: seguir la tendencia comparando dos promedios.
+
+    Qué es y qué hace
+    -----------------
+    Estrategia de seguimiento de tendencia: supone que si el precio viene
+    subiendo, va a seguir subiendo un tiempo.
+
+    Calcula dos promedios del precio:
+      - media corta: promedio de los últimos N_corta precios. Reacciona rápido
+        y representa el precio "reciente".
+      - media larga: promedio de los últimos N_larga precios. Reacciona lento
+        y representa el "nivel de fondo".
+
+    Si la media corta está por encima de la larga, el precio reciente es mayor
+    que el de fondo, o sea que viene subiendo: compra. Si está por debajo,
+    viene bajando: vende, aunque sea con pérdida. Eso último es lo que lo
+    protege en las caídas largas.
+
+    El margen crea una zona muerta entre las dos medias. Sin él, cuando las
+    medias están casi iguales se cruzan muchas veces por puro ruido y el
+    algoritmo compra y vende seguido, pagando comisiones en cada orden.
+
+    Variables
+    ---------
+    N_corta  ticks de la media corta. Más chico: detecta los cambios antes,
+             pero con más ruido.
+    N_larga  ticks de la media larga. Define el plazo de la tendencia que
+             sigue. Debería ser varias veces N_corta.
+    margen   separación mínima entre las medias para actuar, en puntos de
+             precio: compra si corta > larga + margen, vende si
+             corta < larga - margen. Más grande: menos órdenes, pero entra y
+             sale más tarde.
     """
 
     def __init__(self, _name: str, _initial_capital: int, _market_comission: int,
-                 N_corta: int = 8, N_larga: int = 32, margen: float = 0.5) -> None:  # crea el trader con su ventana de precios
+                 N_corta: int = 8, 
+                 N_larga: int = 32, 
+                 margen: float = 2) -> None:  # crea el trader con su ventana de precios
+        
         super().__init__(_name, _initial_capital, _market_comission)
         self.N_corta = N_corta                    # largo de la media corta (ticks)
         self.margen = margen                      # separación mínima entre medias para actuar (puntos de precio)
