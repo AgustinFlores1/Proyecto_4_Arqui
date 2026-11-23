@@ -2,86 +2,74 @@ from pathlib import Path
 
 from market import Market
 from trader import Trader
-from grafico import graficar
+from grafico import graficar_serie
 from algorithms.referencias import ComprarYMantener
-# Familia RSI
 from algorithms.rsi_fijo import RSIFijo
-from algorithms.a2_solo import A2Solo
-from algorithms.b_solo import BSolo
-from algorithms.b_calentamiento import BCalentamiento
-from algorithms.a2b_respaldo import A2BRespaldo
-from algorithms.a2b_reagrupada import A2BReagrupada
-# Seguimiento de tendencia
 from algorithms.cruce_medias import CruceMedias
-from algorithms.breakout import Breakout
-# Reversión a la media
-from algorithms.desviacion_media import DesviacionMedia
-from algorithms.bandas_desviacion import BandasDesviacion
-# Aprenden del mercado
-from algorithms.patrones import Patrones
-from algorithms.lms import LMS
+from algorithms.toma_ganancia import TomaGanancia
 
 INITIAL_CAPITAL_PER_TRADER = 10000   # caja inicial de cada trader
 COMISSION_PER_TRADE = 5              # comisión por orden ejecutada
 
 # Rutas armadas desde la ubicación de este archivo: funcionan desde cualquier carpeta
-SERIE = Path(__file__).resolve().parent.parent / "tb" / "practica.csv"
-GRAFICOS = Path(__file__).resolve().parent / "graficos"      # carpeta donde se guarda un gráfico por familia
+TB = Path(__file__).resolve().parent.parent / "tb"          # series de práctica
+RESERVADAS = TB / "reservadas"                               # series apartadas para verificar
+GRAFICOS = Path(__file__).resolve().parent / "graficos"      # carpeta donde se guarda un gráfico por serie
 
 
-def main():  # arma el mercado, inserta los traders, corre la simulación, imprime los resultados y grafica
-    market = Market(COMISSION_PER_TRADE, INITIAL_CAPITAL_PER_TRADER)
-    market.fill_stock_prices(SERIE)
+def encontrar_series(carpeta: Path) -> list[Path]:  # CSV de la carpeta con encabezado "tick,price", ordenados por nombre
+    series = []                                      # rutas de las series encontradas
+    for ruta in sorted(carpeta.glob("*.csv")):
+        with open(ruta) as f:
+            if f.readline().strip().replace(" ", "") == "tick,price":
+                series.append(ruta)
+    return series
 
-    c, k = market.capital_per_trader, market.commision   # capital y comisión con que se crea cada trader
 
-    referencias = [                                       # se comparan contra todos
+def crear_traders(c: int, k: int) -> tuple[list[Trader], list[Trader]]:  # traders nuevos para una serie: (referencias, candidatos)
+    referencias = [                                  # se comparan contra todos, en gris
         Trader("No operar", c, k),
         ComprarYMantener("Comprar y mantener", c, k),
     ]
-    grupos = {                                            # nombre de la familia -> sus traders
-        "RSI y combinaciones": [
-            RSIFijo("RSI solo (umbrales fijos)", c, k),
-            A2Solo("A2 solo", c, k),
-            BSolo("B solo", c, k),
-            BCalentamiento("B + calentamiento", c, k),
-            A2BRespaldo("A2 + B respaldo", c, k),
-            A2BReagrupada("A2 + B reagrupada", c, k),
-        ],
-        "Seguimiento de tendencia": [
-            CruceMedias("Cruce de medias", c, k),
-            Breakout("Breakout (Donchian)", c, k),
-        ],
-        "Reversión a la media": [
-            DesviacionMedia("Desviación de la media", c, k),
-            BandasDesviacion("Bandas de desviación", c, k),
-        ],
-        "Aprenden del mercado": [
-            Patrones("Tabla de patrones", c, k),
-            LMS("Predictor LMS", c, k),
-        ],
-    }
+    candidatos = [                                   # los tres candidatos con sus parámetros elegidos
+        RSIFijo("RSI fijo (N 46, 4/14)", c, k, N=46, bajo=4, alto=14),
+        CruceMedias("Cruce de medias (8/32, margen 2)", c, k, N_corta=8, N_larga=32, margen=2),
+        TomaGanancia("Toma de ganancia (7/5/10)", c, k, umbral=7, caida=5, recompra=10),
+    ]
+    return referencias, candidatos
 
-    for trader in referencias + [t for ts in grupos.values() for t in ts]:
+
+def simular_serie(ruta: Path, carpeta_graficos: Path) -> list[Trader]:  # corre una serie, guarda su gráfico y devuelve los traders
+    market = Market(COMISSION_PER_TRADE, INITIAL_CAPITAL_PER_TRADER)
+    market.fill_stock_prices(ruta)
+
+    referencias, candidatos = crear_traders(market.capital_per_trader, market.commision)
+    for trader in referencias + candidatos:
         market.insert_trader(trader)
-
     market.run_sim()
 
-    print(f"{len(market.stock_prices)} ticks | comprar y mantener (fórmula del testbench): "
-          f"{market.buy_and_hold_reference()}")
-    print("\n== Referencias")
-    for trader in referencias:
-        trader.print_stats()
-    for familia, traders in grupos.items():
-        print(f"\n== {familia}")
-        for trader in traders:
-            trader.print_stats()
+    graficar_serie(market.stock_prices, ruta.stem, candidatos, referencias,
+                   capital_inicial=INITIAL_CAPITAL_PER_TRADER,
+                   ruta=carpeta_graficos / f"{ruta.stem}.png")
+    return referencias + candidatos
 
-    rutas = graficar(market.stock_prices, grupos, referencias,
-                     capital_inicial=INITIAL_CAPITAL_PER_TRADER, carpeta=GRAFICOS, mostrar=False)
-    print("\nGráficos guardados:")
-    for ruta in rutas:
-        print(f"  {ruta}")
+
+def main():  # simula los candidatos en cada serie de tb/ y tb/reservadas/, imprime una tabla y guarda un gráfico por serie
+    grupos = [                                       # (título, series, carpeta donde van sus gráficos)
+        ("Series de calibración (tb/)", encontrar_series(TB), GRAFICOS),
+        ("Series reservadas (tb/reservadas/)", encontrar_series(RESERVADAS), GRAFICOS),
+    ]
+
+    for titulo, series, carpeta in grupos:
+        if not series:
+            continue
+        print(f"\n===== {titulo}")
+        for ruta in series:
+            traders = simular_serie(ruta, carpeta)
+            print(f"\n{ruta.stem}")
+            for trader in traders:
+                trader.print_stats()             # patrimonio, caja, acciones, órdenes, comisiones y pérdida máxima
+        print(f"\nGráficos en {carpeta}")
 
 
 if __name__ == "__main__":
