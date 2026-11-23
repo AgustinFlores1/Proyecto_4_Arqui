@@ -133,5 +133,5 @@ def a_orden(accion: int, stocks: int) -> tuple[int, int]:  # convierte una acciÃ
     if accion == COMPRAR and stocks == 0:
         return COMPRAR, 63
     if accion == VENDER and stocks > 0:
-        return VENDER, min(63, stocks)
+        return VENDER, 63
     return MANTENER, 0
