@@ -16,7 +16,6 @@
 #   0x8001_0004 [4(x10)] SPI PRICE     leerlo baja el bit "precio nuevo"
 #   0x8001_0008 [8(x10)] SPI DECISION  byte que la maestra lee en la próxima transacción
 #   0x8000_0000  7 segmentos   (depuración: muestra el precio en hexadecimal)
-#
 
 # inicio:      cargar bases, poner en 0 el buffer, S_c = S_l = 0, idx = 0, contador = 0, comprado = 0
 # esperar:     leer STATUS; si bit 0 = 0, volver a esperar
@@ -29,10 +28,14 @@
 # escribir:    guardar decisión en DECISION (siempre); volver a esperar
 
 inicio:
-        addi  x5, x0, 0          # cont = 0
-        addi  x6, x0, 0          # comprado = 0
+        lui   x1, 0x80000        # x1 = base de periféricos (display +0, LEDs +4)
         lui   x10, 0x80010       # spi = 0x8001_0000
         addi  x11, x0, 0x400     # buf = 0x400
+
+        sw    x0, 8(x10)         # DECISION = mantener
+        addi  x5, x0, 0          # cont = 0
+        addi  x6, x0, 0          # comprado = 0
+        addi  x7, x0, 128        # límite de limpiar: 32 posiciones × 4 bytes
         addi  x12, x0, 0         # idx = 0
         addi  x13, x0, 0         # p = 0
         addi  x14, x0, 0         # S_c = 0
@@ -47,10 +50,15 @@ limpiar:
         addi  x12, x0, 0         # idx vuelve a 0
 
 esperar:
+        lw    x7, 8(x1)          # botones
+        bne   x7, x0, inicio     # cualquier botón presionado: reiniciar todo
+
         lw    x7, 0(x10)         # STATUS
         andi  x7, x7, 1          # bit 0: new_price
         beq   x7, x0, esperar    # sin precio nuevo: seguir esperando
         lw    x13, 4(x10)        # p = PRICE (new_price vuelve a 0)
+
+        sw    x13, 0(x1)         # display = precio en hexadecimal
 
 actualizar:
         add   x7, x11, x12       # dirección del más viejo = buf + idx
@@ -72,19 +80,19 @@ actualizar:
         add   x15, x15, x13      # S_l += precio
 
 calentar:
-        addi x7, x0, 32
-        addi x9, x0, 0x00
-        bge  x5, x7, decidir
+        addi x7, x0, 32          # Tamaño maximo de buffer
+        addi x9, x0, 0x00        # DECISION mantenerse
+        bge  x5, x7, decidir     # Si el tamaño de buffer (x5) es mayor a 32 ya puede decidir
 
-        addi x5, x5, 1
-        blt  x5, x7, escribir
+        addi x5, x5, 1           # Sumar 1 al tamaño del buffer
+        blt  x5, x7, escribir    # Escribir DECISION mantenerse directamente
 
 decidir:
         add x7, x14, x14         # S_c + S_c
         add x7, x7, x7           # (S_c + S_c) * 2
         sub x7, x7, x15          # D = 4 * S_c - S_l 
 
-        beq  x6, x0, sin_acciones
+        beq  x6, x0, sin_acciones # Si comprado (x6) = 0, va a comprar
 
 con_acciones:
         addi x8, x0, -64
@@ -95,14 +103,12 @@ con_acciones:
 
 sin_acciones:
         addi x8, x0, 64
-        bge  x8, x7, escribir
-        addi x9, x0, 0x7F
-        addi x6, x0, 1
+        bge  x8, x7, escribir    # D <= 64: no comprar → mantener (x9 ya es 0)
+        addi x9, x0, 0x7F        # comrpar 63
+        addi x6, x0, 1           # comprado = 1
 
 escribir:
-        sw   x9, 8(x10)
+        sw    x6, 4(x1)          # LED 1 encendido = tienes acciones
+
+        sw   x9, 8(x10)          # Escribir decision en la ram
         j    esperar
-
-
-                
-
