@@ -56,6 +56,10 @@ sim: asm
 	iverilog -g2012 -s tb_proyecto_4 -o tb_p4 $$(yosys-config --datdir)/ice40/cells_sim.v $(SRC) tb/tb_proyecto_4.sv
 	vvp -n tb_p4
 
+sim_reset: asm
+	iverilog -g2012 -s tb_reset -o tb_reset $$(yosys-config --datdir)/ice40/cells_sim.v $(SRC) tb/tb_reset.sv
+	vvp -n tb_reset
+
 # Clean up generated files
 clean:
-	rm -f $(JSON) $(ASC) $(BIN) $(HEX) tb_p4
+	rm -f $(JSON) $(ASC) $(BIN) $(HEX) tb_p4 tb_reset
