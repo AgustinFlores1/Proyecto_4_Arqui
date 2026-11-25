@@ -1,0 +1,59 @@
+Series: practica.csv, practica_amd_2022_ene.csv, practica_apple_2022.csv, practica_netflix_2022.csv, practica_netflix_2023.csv
+Reservadas: practica_amd_2022_may.csv, practica_apple_2023.csv, practica_tesla_2022.csv
+
+BCalentamiento: 12 combinaciones en 5 series (practica, practica_amd_2022_ene, practica_apple_2022, practica_netflix_2022, practica_netflix_2023)
+  gana en 4/5 | promedio vs B&H    +670 | órdenes promedio      1 | {'entrada': 4, 'h': 16, 'C_min': 50}
+  gana en 4/5 | promedio vs B&H    +552 | órdenes promedio     11 | {'entrada': 4, 'h': 16, 'C_min': 25}
+  gana en 4/5 | promedio vs B&H    +547 | órdenes promedio      0 | {'entrada': 8, 'h': 16, 'C_min': 50}
+  gana en 4/5 | promedio vs B&H    +547 | órdenes promedio      3 | {'entrada': 8, 'h': 16, 'C_min': 25}
+  gana en 4/5 | promedio vs B&H    +516 | órdenes promedio      0 | {'entrada': 4, 'h': 4, 'C_min': 50}
+  gana en 4/5 | promedio vs B&H    +516 | órdenes promedio      0 | {'entrada': 8, 'h': 4, 'C_min': 25}
+  gana en 4/5 | promedio vs B&H    +516 | órdenes promedio      0 | {'entrada': 8, 'h': 4, 'C_min': 50}
+  gana en 4/5 | promedio vs B&H    +513 | órdenes promedio      1 | {'entrada': 8, 'h': 8, 'C_min': 50}
+  gana en 4/5 | promedio vs B&H    +501 | órdenes promedio      1 | {'entrada': 4, 'h': 8, 'C_min': 50}
+  gana en 4/5 | promedio vs B&H    +494 | órdenes promedio      3 | {'entrada': 8, 'h': 8, 'C_min': 25}
+  gana en 4/5 | promedio vs B&H    +486 | órdenes promedio      5 | {'entrada': 4, 'h': 8, 'C_min': 25}
+  gana en 4/5 | promedio vs B&H    +433 | órdenes promedio      2 | {'entrada': 4, 'h': 4, 'C_min': 25}
+
+Verificación de los 6 mejores en las series reservadas:
+
+BCalentamiento {'entrada': 4, 'h': 16, 'C_min': 50}
+  practica_amd_2022_may.csv        vs B&H    +353 | vs no operar      +0 | órdenes     0
+  practica_apple_2023.csv          vs B&H    -371 | vs no operar      +0 | órdenes     0
+  practica_tesla_2022.csv          vs B&H      +5 | vs no operar      +0 | órdenes     0
+  -> supera a comprar y mantener en 2/3 series | promedio vs B&H -4
+
+BCalentamiento {'entrada': 4, 'h': 16, 'C_min': 25}
+  practica_amd_2022_may.csv        vs B&H    -574 | vs no operar    -927 | órdenes     4
+  practica_apple_2023.csv          vs B&H    -371 | vs no operar      +0 | órdenes     0
+  practica_tesla_2022.csv          vs B&H    +394 | vs no operar    +389 | órdenes     4
+  -> supera a comprar y mantener en 1/3 series | promedio vs B&H -184
+
+BCalentamiento {'entrada': 8, 'h': 16, 'C_min': 50}
+  practica_amd_2022_may.csv        vs B&H    +353 | vs no operar      +0 | órdenes     0
+  practica_apple_2023.csv          vs B&H    -371 | vs no operar      +0 | órdenes     0
+  practica_tesla_2022.csv          vs B&H      +5 | vs no operar      +0 | órdenes     0
+  -> supera a comprar y mantener en 2/3 series | promedio vs B&H -4
+
+BCalentamiento {'entrada': 8, 'h': 16, 'C_min': 25}
+  practica_amd_2022_may.csv        vs B&H    +353 | vs no operar      +0 | órdenes     0
+  practica_apple_2023.csv          vs B&H    -371 | vs no operar      +0 | órdenes     0
+  practica_tesla_2022.csv          vs B&H      +5 | vs no operar      +0 | órdenes     0
+  -> supera a comprar y mantener en 2/3 series | promedio vs B&H -4
+
+BCalentamiento {'entrada': 4, 'h': 4, 'C_min': 50}
+  practica_amd_2022_may.csv        vs B&H    +353 | vs no operar      +0 | órdenes     0
+  practica_apple_2023.csv          vs B&H    -371 | vs no operar      +0 | órdenes     0
+  practica_tesla_2022.csv          vs B&H      +5 | vs no operar      +0 | órdenes     0
+  -> supera a comprar y mantener en 2/3 series | promedio vs B&H -4
+
+BCalentamiento {'entrada': 8, 'h': 4, 'C_min': 25}
+  practica_amd_2022_may.csv        vs B&H    +353 | vs no operar      +0 | órdenes     0
+  practica_apple_2023.csv          vs B&H    -371 | vs no operar      +0 | órdenes     0
+  practica_tesla_2022.csv          vs B&H      +5 | vs no operar      +0 | órdenes     0
+  -> supera a comprar y mantener en 2/3 series | promedio vs B&H -4
+
+Gráficos de las 6 mejores combinaciones:
+  /home/agustin/Proyectos/ArquitecturaDeComputadores/Proyecto_4_Arqui/trading_sim/graficos_barrido/BCalentamiento/practica_amd_2022_may.png
+  /home/agustin/Proyectos/ArquitecturaDeComputadores/Proyecto_4_Arqui/trading_sim/graficos_barrido/BCalentamiento/practica_apple_2023.png
+  /home/agustin/Proyectos/ArquitecturaDeComputadores/Proyecto_4_Arqui/trading_sim/graficos_barrido/BCalentamiento/practica_tesla_2022.png

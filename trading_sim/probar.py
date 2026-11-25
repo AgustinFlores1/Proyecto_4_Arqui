@@ -29,20 +29,20 @@ from trader import Trader
 from grafico import graficar_serie
 from algorithms.referencias import ComprarYMantener
 from algorithms.rsi_fijo import RSIFijo
-# from algorithms.a2_solo import A2Solo
-# from algorithms.b_solo import BSolo
-# from algorithms.b_calentamiento import BCalentamiento
-# from algorithms.a2b_respaldo import A2BRespaldo
-# from algorithms.a2b_reagrupada import A2BReagrupada
+from algorithms.a2_solo import A2Solo
+from algorithms.b_solo import BSolo
+from algorithms.b_calentamiento import BCalentamiento
+from algorithms.a2b_respaldo import A2BRespaldo
+from algorithms.a2b_reagrupada import A2BReagrupada
 from algorithms.cruce_medias import CruceMedias
-# from algorithms.breakout import Breakout
-# from algorithms.desviacion_media import DesviacionMedia
-# from algorithms.bandas_desviacion import BandasDesviacion
-# from algorithms.patrones import Patrones
-# from algorithms.lms import LMS
-# from algorithms.rachas import Rachas
+from algorithms.breakout import Breakout
+from algorithms.desviacion_media import DesviacionMedia
+from algorithms.bandas_desviacion import BandasDesviacion
+from algorithms.patrones import Patrones
+from algorithms.lms import LMS
+from algorithms.rachas import Rachas
 from algorithms.toma_ganancia import TomaGanancia
-# from algorithms.lotes import Lotes
+from algorithms.lotes import Lotes
 
 TB = Path(__file__).resolve().parent.parent / "tb"     # carpeta con las series de práctica
 RESERVADAS = TB / "reservadas"                          # series apartadas, solo para verificar al final
@@ -51,38 +51,38 @@ GRAFICOS = Path(__file__).resolve().parent / "graficos_barrido"   # carpeta de l
 ALGORITMOS = {                                          # nombre en la línea de comandos -> clase
     "NoOperar": Trader,
     "RSIFijo": RSIFijo, 
-    # "A2Solo": A2Solo, 
-    # "BSolo": BSolo, 
-    # "BCalentamiento": BCalentamiento,
-    # "A2BRespaldo": A2BRespaldo, 
-    # "A2BReagrupada": A2BReagrupada,
+    "A2Solo": A2Solo, 
+    "BSolo": BSolo, 
+    "BCalentamiento": BCalentamiento,
+    "A2BRespaldo": A2BRespaldo, 
+    "A2BReagrupada": A2BReagrupada,
     "CruceMedias": CruceMedias, 
-    # "Breakout": Breakout,
-    # "DesviacionMedia": DesviacionMedia, 
-    # "BandasDesviacion": BandasDesviacion,
-    # "Patrones": Patrones, 
-    # "LMS": LMS,
-    # "Rachas": Rachas, 
+    "Breakout": Breakout,
+    "DesviacionMedia": DesviacionMedia, 
+    "BandasDesviacion": BandasDesviacion,
+    "Patrones": Patrones, 
+    "LMS": LMS,
+    "Rachas": Rachas, 
     "TomaGanancia": TomaGanancia, 
-    #"Lotes": Lotes
+    "Lotes": Lotes
 }
 
 GRILLAS = {                                             # valores a probar en --barrido, por algoritmo
-    "RSIFijo":          {"bajo": [4], "alto": [14], "N": [46, 48]},
-    # "A2Solo":           {"K": [256, 512, 1024], "N": [48, 64, 80]},
-    # "BSolo":            {"entrada": [2, 3, 4], "h": [4, 5, 6], "salida": [-1, -0.5], "N": [48]},
-    # "BCalentamiento":   {"entrada": [4, 8], "h": [4, 8, 16], "C_min": [25, 50]},
-    # "A2BRespaldo":      {"entrada": [4, 6, 8], "h": [16, 32, 64], "K": [128, 192, 256]},
-    # "A2BReagrupada":    {"entrada": [4, 6, 8], "h": [16, 32], "K": [16, 32, 64, 96]},
-    "CruceMedias":      {"margen": [2], "N_corta": [8], "N_larga": [32]},
-    # "Breakout":         {"N_entrada": [32, 64, 128], "N_salida": [16, 32, 64]},
-    # "DesviacionMedia":  {"umbral": [4, 5, 6], "N": [8, 12, 16]},
-    # "BandasDesviacion": {"k": [4, 5, 6], "N": [2, 4, 8]},
-    # "Patrones":         {"entrada": [2, 3, 4], "h": [8, 16], "k": [2, 3]},
-    # "LMS":              {"entrada": [2, 3], "mu": [0.005, 0.01], "h": [4, 8]},
-    # "Rachas":       {"n_bajas": [2, 3, 5, 6, 7], "n_subidas": [2, 3, 6, 7]},
+    "RSIFijo":          {"bajo": [3, 4, 5], "alto": [13, 14, 15], "N": [46, 48]},
+    "A2Solo":           {"K": [256, 512, 1024], "N": [48, 64, 80]},
+    "BSolo":            {"entrada": [2, 3, 4], "h": [4, 5, 6], "salida": [-1, -0.5], "N": [48]},
+    "BCalentamiento":   {"entrada": [4, 8], "h": [4, 8, 16], "C_min": [25, 50]},
+    "A2BRespaldo":      {"entrada": [4, 6, 8], "h": [16, 32, 64], "K": [128, 192, 256]},
+    "A2BReagrupada":    {"entrada": [4, 6, 8], "h": [16, 32], "K": [16, 32, 64, 96]},
+    "CruceMedias":      {"margen": [1, 2, 3], "N_corta": [7, 8, 9], "N_larga": [16, 32, 64]},
+    "Breakout":         {"N_entrada": [32, 64, 128], "N_salida": [16, 32, 64]},
+    "DesviacionMedia":  {"umbral": [4, 5, 6], "N": [8, 12, 16]},
+    "BandasDesviacion": {"k": [4, 5, 6], "N": [2, 4, 8]},
+    "Patrones":         {"entrada": [2, 3, 4], "h": [8, 16], "k": [2, 3]},
+    "LMS":              {"entrada": [2, 3], "mu": [0.005, 0.01], "h": [4, 8]},
+    "Rachas":       {"n_bajas": [2, 3, 5, 6, 7], "n_subidas": [2, 3, 6, 7]},
     "TomaGanancia": {"umbral": [6, 7, 8], "caida": [4, 5, 6], "recompra": [9, 10, 11]},
-    # "Lotes":        {"q": [16, 32, 63], "bajada": [1, 2, 4, 6, 8, 10, 12, 16, 32, 64, 128, 256, 512], "subida": [7, 8, 9]},
+    "Lotes":        {"q": [16, 32, 63], "bajada": [1, 2, 4, 6, 8, 10, 12, 16, 32, 64, 128, 256, 512], "subida": [7, 8, 9]},
 }
 
 

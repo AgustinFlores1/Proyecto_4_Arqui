@@ -17,16 +17,6 @@
 #   0x8001_0008 [8(x10)] SPI DECISION  byte que la maestra lee en la próxima transacción
 #   0x8000_0000  7 segmentos   (depuración: muestra el precio en hexadecimal)
 
-# inicio:      cargar bases, poner en 0 el buffer, S_c = S_l = 0, idx = 0, contador = 0, comprado = 0
-# esperar:     leer STATUS; si bit 0 = 0, volver a esperar
-#             leer PRICE → p
-# actualizar:  viejo32 = buffer[idx];  viejo8 = buffer[(idx+96) AND 124]
-#             buffer[idx] = p;  idx = (idx+4) AND 124
-#             S_l += p − viejo32;  S_c += p − viejo8
-# calentar:    contador++; si contador < 32 → decisión = 0x00, ir a escribir
-# decidir:     D = 4·S_c − S_l; elegir 0x7F / 0xBF / 0x00 según D y comprado
-# escribir:    guardar decisión en DECISION (siempre); volver a esperar
-
 inicio:
         lui   x1, 0x80000        # x1 = base de periféricos (display +0, LEDs +4)
         lui   x10, 0x80010       # spi = 0x8001_0000

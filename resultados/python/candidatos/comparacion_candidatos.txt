@@ -1,0 +1,64 @@
+
+===== Series de calibración (tb/)
+
+practica
+No operar: patrimonio 10000 | caja 10000 | acciones 0 | órdenes 0 | comisiones 0 | pérdida máx 0
+Comprar y mantener: patrimonio 9695 | caja 95 | acciones 60 | órdenes 1 | comisiones 5 | pérdida máx 9300
+RSI fijo (N 46, 4/14): patrimonio 11099 | caja 1019 | acciones 63 | órdenes 7 | comisiones 35 | pérdida máx 9765
+Cruce de medias (8/32, margen 2): patrimonio 13881 | caja 13881 | acciones 0 | órdenes 124 | comisiones 620 | pérdida máx 3950
+Toma de ganancia (7/5/10): patrimonio 12455 | caja 12455 | acciones 0 | órdenes 10 | comisiones 50 | pérdida máx 4294
+
+practica_amd_2022_ene
+No operar: patrimonio 10000 | caja 10000 | acciones 0 | órdenes 0 | comisiones 0 | pérdida máx 0
+Comprar y mantener: patrimonio 8315 | caja 11 | acciones 48 | órdenes 1 | comisiones 5 | pérdida máx 7440
+RSI fijo (N 46, 4/14): patrimonio 10358 | caja 151 | acciones 59 | órdenes 3 | comisiones 15 | pérdida máx 7750
+Cruce de medias (8/32, margen 2): patrimonio 9472 | caja 130 | acciones 54 | órdenes 215 | comisiones 1075 | pérdida máx 6959
+Toma de ganancia (7/5/10): patrimonio 9163 | caja 167 | acciones 52 | órdenes 5 | comisiones 25 | pérdida máx 5500
+
+practica_apple_2022
+No operar: patrimonio 10000 | caja 10000 | acciones 0 | órdenes 0 | comisiones 0 | pérdida máx 0
+Comprar y mantener: patrimonio 11058 | caja 22 | acciones 89 | órdenes 2 | comisiones 10 | pérdida máx 12994
+RSI fijo (N 46, 4/14): patrimonio 11550 | caja 3738 | acciones 63 | órdenes 5 | comisiones 25 | pérdida máx 9198
+Cruce de medias (8/32, margen 2): patrimonio 18872 | caja 11060 | acciones 63 | órdenes 103 | comisiones 515 | pérdida máx 2355
+Toma de ganancia (7/5/10): patrimonio 14219 | caja 6407 | acciones 63 | órdenes 13 | comisiones 65 | pérdida máx 955
+
+practica_netflix_2022
+No operar: patrimonio 10000 | caja 10000 | acciones 0 | órdenes 0 | comisiones 0 | pérdida máx 0
+Comprar y mantener: patrimonio 9112 | caja 0 | acciones 68 | órdenes 4 | comisiones 20 | pérdida máx 10422
+RSI fijo (N 46, 4/14): patrimonio 9345 | caja 903 | acciones 63 | órdenes 5 | comisiones 25 | pérdida máx 9765
+Cruce de medias (8/32, margen 2): patrimonio 13098 | caja 4656 | acciones 63 | órdenes 121 | comisiones 605 | pérdida máx 5101
+Toma de ganancia (7/5/10): patrimonio 19653 | caja 11211 | acciones 63 | órdenes 35 | comisiones 175 | pérdida máx 3538
+
+practica_netflix_2023
+No operar: patrimonio 10000 | caja 10000 | acciones 0 | órdenes 0 | comisiones 0 | pérdida máx 0
+Comprar y mantener: patrimonio 9261 | caja 21 | acciones 56 | órdenes 2 | comisiones 10 | pérdida máx 8680
+RSI fijo (N 46, 4/14): patrimonio 9756 | caja 21 | acciones 59 | órdenes 3 | comisiones 15 | pérdida máx 9145
+Cruce de medias (8/32, margen 2): patrimonio 17526 | caja 17526 | acciones 0 | órdenes 134 | comisiones 670 | pérdida máx 3324
+Toma de ganancia (7/5/10): patrimonio 15912 | caja 15912 | acciones 0 | órdenes 24 | comisiones 120 | pérdida máx 3727
+
+Gráficos en /home/agustin/Proyectos/ArquitecturaDeComputadores/Proyecto_4_Arqui/resultados/python/candidatos
+
+===== Series reservadas (tb/reservadas/)
+
+practica_amd_2022_may
+No operar: patrimonio 10000 | caja 10000 | acciones 0 | órdenes 0 | comisiones 0 | pérdida máx 0
+Comprar y mantener: patrimonio 9629 | caja 1 | acciones 58 | órdenes 2 | comisiones 10 | pérdida máx 8868
+RSI fijo (N 46, 4/14): patrimonio 10035 | caja 75 | acciones 60 | órdenes 5 | comisiones 25 | pérdida máx 9300
+Cruce de medias (8/32, margen 2): patrimonio 10974 | caja 10974 | acciones 0 | órdenes 130 | comisiones 650 | pérdida máx 4652
+Toma de ganancia (7/5/10): patrimonio 11832 | caja 1374 | acciones 63 | órdenes 9 | comisiones 45 | pérdida máx 5113
+
+practica_apple_2023
+No operar: patrimonio 10000 | caja 10000 | acciones 0 | órdenes 0 | comisiones 0 | pérdida máx 0
+Comprar y mantener: patrimonio 10429 | caja 89 | acciones 94 | órdenes 2 | comisiones 10 | pérdida máx 14570
+RSI fijo (N 46, 4/14): patrimonio 10552 | caja 3622 | acciones 63 | órdenes 3 | comisiones 15 | pérdida máx 9765
+Cruce de medias (8/32, margen 2): patrimonio 11024 | caja 11024 | acciones 0 | órdenes 144 | comisiones 720 | pérdida máx 4744
+Toma de ganancia (7/5/10): patrimonio 12228 | caja 12228 | acciones 0 | órdenes 8 | comisiones 40 | pérdida máx 703
+
+practica_tesla_2022
+No operar: patrimonio 10000 | caja 10000 | acciones 0 | órdenes 0 | comisiones 0 | pérdida máx 0
+Comprar y mantener: patrimonio 9995 | caja 31 | acciones 47 | órdenes 1 | comisiones 5 | pérdida máx 7285
+RSI fijo (N 46, 4/14): patrimonio 10023 | caja 59 | acciones 47 | órdenes 3 | comisiones 15 | pérdida máx 7122
+Cruce de medias (8/32, margen 2): patrimonio 13575 | caja 13575 | acciones 0 | órdenes 144 | comisiones 720 | pérdida máx 3174
+Toma de ganancia (7/5/10): patrimonio 10264 | caja 10264 | acciones 0 | órdenes 4 | comisiones 20 | pérdida máx 5390
+
+Gráficos en /home/agustin/Proyectos/ArquitecturaDeComputadores/Proyecto_4_Arqui/resultados/python/candidatos

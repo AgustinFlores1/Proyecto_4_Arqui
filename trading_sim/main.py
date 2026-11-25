@@ -12,9 +12,9 @@ INITIAL_CAPITAL_PER_TRADER = 10000   # caja inicial de cada trader
 COMISSION_PER_TRADE = 5              # comisión por orden ejecutada
 
 # Rutas armadas desde la ubicación de este archivo: funcionan desde cualquier carpeta
-TB = Path(__file__).resolve().parent.parent / "tb"          # series de práctica
-RESERVADAS = TB / "reservadas"                               # series apartadas para verificar
-GRAFICOS = Path(__file__).resolve().parent / "graficos"      # carpeta donde se guarda un gráfico por serie
+TB = Path(__file__).resolve().parent.parent / "tb"                                   # series de práctica
+RESERVADAS = TB / "reservadas"                                                       # series apartadas para verificar
+GRAFICOS = Path(__file__).resolve().parent.parent / "resultados" / "python" / "candidatos"     # carpeta donde se guarda un gráfico por serie
 
 
 def encontrar_series(carpeta: Path) -> list[Path]:  # CSV de la carpeta con encabezado "tick,price", ordenados por nombre

@@ -1,0 +1,62 @@
+Series: practica.csv, practica_amd_2022_ene.csv, practica_apple_2022.csv, practica_netflix_2022.csv, practica_netflix_2023.csv
+Reservadas: practica_amd_2022_may.csv, practica_apple_2023.csv, practica_tesla_2022.csv
+
+RSIFijo: 18 combinaciones en 5 series (practica, practica_amd_2022_ene, practica_apple_2022, practica_netflix_2022, practica_netflix_2023)
+  gana en 5/5 | promedio vs B&H    +977 | órdenes promedio      5 | {'bajo': 5, 'alto': 14, 'N': 46}
+  gana en 5/5 | promedio vs B&H    +937 | órdenes promedio      5 | {'bajo': 4, 'alto': 14, 'N': 46}
+  gana en 5/5 | promedio vs B&H    +812 | órdenes promedio      4 | {'bajo': 4, 'alto': 14, 'N': 48}
+  gana en 5/5 | promedio vs B&H    +621 | órdenes promedio      4 | {'bajo': 5, 'alto': 14, 'N': 48}
+  gana en 4/5 | promedio vs B&H    +589 | órdenes promedio      5 | {'bajo': 3, 'alto': 14, 'N': 46}
+  gana en 4/5 | promedio vs B&H    +514 | órdenes promedio     10 | {'bajo': 4, 'alto': 13, 'N': 48}
+  gana en 4/5 | promedio vs B&H    +458 | órdenes promedio      4 | {'bajo': 3, 'alto': 14, 'N': 48}
+  gana en 4/5 | promedio vs B&H    +232 | órdenes promedio      2 | {'bajo': 5, 'alto': 15, 'N': 46}
+  gana en 4/5 | promedio vs B&H    +232 | órdenes promedio      2 | {'bajo': 5, 'alto': 15, 'N': 48}
+  gana en 4/5 | promedio vs B&H    +163 | órdenes promedio      2 | {'bajo': 4, 'alto': 15, 'N': 46}
+  gana en 4/5 | promedio vs B&H    +153 | órdenes promedio      2 | {'bajo': 4, 'alto': 15, 'N': 48}
+  gana en 3/5 | promedio vs B&H    +217 | órdenes promedio     11 | {'bajo': 5, 'alto': 13, 'N': 48}
+  gana en 2/5 | promedio vs B&H    -187 | órdenes promedio     12 | {'bajo': 4, 'alto': 13, 'N': 46}
+  gana en 2/5 | promedio vs B&H    -252 | órdenes promedio      2 | {'bajo': 3, 'alto': 15, 'N': 48}
+  gana en 2/5 | promedio vs B&H    -270 | órdenes promedio      8 | {'bajo': 3, 'alto': 13, 'N': 48}
+
+Verificación de los 6 mejores en las series reservadas:
+
+RSIFijo {'bajo': 5, 'alto': 14, 'N': 46}
+  practica_amd_2022_may.csv        vs B&H    +388 | vs no operar     +35 | órdenes     5
+  practica_apple_2023.csv          vs B&H    +244 | vs no operar    +615 | órdenes     3
+  practica_tesla_2022.csv          vs B&H    -102 | vs no operar    -107 | órdenes     3
+  -> supera a comprar y mantener en 2/3 series | promedio vs B&H +177
+
+RSIFijo {'bajo': 4, 'alto': 14, 'N': 46}
+  practica_amd_2022_may.csv        vs B&H    +388 | vs no operar     +35 | órdenes     5
+  practica_apple_2023.csv          vs B&H    +181 | vs no operar    +552 | órdenes     3
+  practica_tesla_2022.csv          vs B&H     +28 | vs no operar     +23 | órdenes     3
+  -> supera a comprar y mantener en 3/3 series | promedio vs B&H +199
+
+RSIFijo {'bajo': 4, 'alto': 14, 'N': 48}
+  practica_amd_2022_may.csv        vs B&H    +483 | vs no operar    +130 | órdenes     5
+  practica_apple_2023.csv          vs B&H    -512 | vs no operar    -141 | órdenes     3
+  practica_tesla_2022.csv          vs B&H     +74 | vs no operar     +69 | órdenes     3
+  -> supera a comprar y mantener en 2/3 series | promedio vs B&H +15
+
+RSIFijo {'bajo': 5, 'alto': 14, 'N': 48}
+  practica_amd_2022_may.csv        vs B&H    +388 | vs no operar     +35 | órdenes     5
+  practica_apple_2023.csv          vs B&H    +181 | vs no operar    +552 | órdenes     3
+  practica_tesla_2022.csv          vs B&H     +26 | vs no operar     +21 | órdenes     3
+  -> supera a comprar y mantener en 3/3 series | promedio vs B&H +198
+
+RSIFijo {'bajo': 3, 'alto': 14, 'N': 46}
+  practica_amd_2022_may.csv        vs B&H    +869 | vs no operar    +516 | órdenes     3
+  practica_apple_2023.csv          vs B&H    -386 | vs no operar     -15 | órdenes     3
+  practica_tesla_2022.csv          vs B&H    -325 | vs no operar    -330 | órdenes     3
+  -> supera a comprar y mantener en 1/3 series | promedio vs B&H +53
+
+RSIFijo {'bajo': 4, 'alto': 13, 'N': 48}
+  practica_amd_2022_may.csv        vs B&H   +1046 | vs no operar    +693 | órdenes    11
+  practica_apple_2023.csv          vs B&H    +708 | vs no operar   +1079 | órdenes    11
+  practica_tesla_2022.csv          vs B&H   +2310 | vs no operar   +2305 | órdenes    11
+  -> supera a comprar y mantener en 3/3 series | promedio vs B&H +1355
+
+Gráficos de las 6 mejores combinaciones:
+  /home/agustin/Proyectos/ArquitecturaDeComputadores/Proyecto_4_Arqui/trading_sim/graficos_barrido/RSIFijo/practica_amd_2022_may.png
+  /home/agustin/Proyectos/ArquitecturaDeComputadores/Proyecto_4_Arqui/trading_sim/graficos_barrido/RSIFijo/practica_apple_2023.png
+  /home/agustin/Proyectos/ArquitecturaDeComputadores/Proyecto_4_Arqui/trading_sim/graficos_barrido/RSIFijo/practica_tesla_2022.png

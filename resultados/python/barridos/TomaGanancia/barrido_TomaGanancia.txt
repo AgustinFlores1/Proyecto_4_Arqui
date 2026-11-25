@@ -1,0 +1,62 @@
+Series: practica.csv, practica_amd_2022_ene.csv, practica_apple_2022.csv, practica_netflix_2022.csv, practica_netflix_2023.csv
+Reservadas: practica_amd_2022_may.csv, practica_apple_2023.csv, practica_tesla_2022.csv
+
+TomaGanancia: 27 combinaciones en 5 series (practica, practica_amd_2022_ene, practica_apple_2022, practica_netflix_2022, practica_netflix_2023)
+  gana en 5/5 | promedio vs B&H   +4894 | órdenes promedio     18 | {'umbral': 7, 'caida': 5, 'recompra': 11}
+  gana en 5/5 | promedio vs B&H   +4878 | órdenes promedio     18 | {'umbral': 7, 'caida': 6, 'recompra': 11}
+  gana en 5/5 | promedio vs B&H   +4859 | órdenes promedio     17 | {'umbral': 8, 'caida': 5, 'recompra': 10}
+  gana en 5/5 | promedio vs B&H   +4796 | órdenes promedio     17 | {'umbral': 7, 'caida': 5, 'recompra': 10}
+  gana en 5/5 | promedio vs B&H   +4678 | órdenes promedio     17 | {'umbral': 7, 'caida': 4, 'recompra': 10}
+  gana en 5/5 | promedio vs B&H   +4554 | órdenes promedio     16 | {'umbral': 6, 'caida': 4, 'recompra': 10}
+  gana en 5/5 | promedio vs B&H   +4539 | órdenes promedio     19 | {'umbral': 6, 'caida': 5, 'recompra': 9}
+  gana en 5/5 | promedio vs B&H   +4507 | órdenes promedio     19 | {'umbral': 6, 'caida': 6, 'recompra': 11}
+  gana en 5/5 | promedio vs B&H   +4506 | órdenes promedio     18 | {'umbral': 7, 'caida': 5, 'recompra': 9}
+  gana en 5/5 | promedio vs B&H   +4459 | órdenes promedio     17 | {'umbral': 6, 'caida': 5, 'recompra': 10}
+  gana en 5/5 | promedio vs B&H   +4458 | órdenes promedio     16 | {'umbral': 8, 'caida': 6, 'recompra': 11}
+  gana en 5/5 | promedio vs B&H   +4271 | órdenes promedio     19 | {'umbral': 6, 'caida': 5, 'recompra': 11}
+  gana en 5/5 | promedio vs B&H   +4258 | órdenes promedio     17 | {'umbral': 8, 'caida': 5, 'recompra': 9}
+  gana en 5/5 | promedio vs B&H   +4238 | órdenes promedio     16 | {'umbral': 8, 'caida': 5, 'recompra': 11}
+  gana en 5/5 | promedio vs B&H   +4201 | órdenes promedio     17 | {'umbral': 7, 'caida': 4, 'recompra': 9}
+
+Verificación de los 6 mejores en las series reservadas:
+
+TomaGanancia {'umbral': 7, 'caida': 5, 'recompra': 11}
+  practica_amd_2022_may.csv        vs B&H   +5643 | vs no operar   +5290 | órdenes    22
+  practica_apple_2023.csv          vs B&H   +1363 | vs no operar   +1734 | órdenes     6
+  practica_tesla_2022.csv          vs B&H    +269 | vs no operar    +264 | órdenes     4
+  -> supera a comprar y mantener en 3/3 series | promedio vs B&H +2425
+
+TomaGanancia {'umbral': 7, 'caida': 6, 'recompra': 11}
+  practica_amd_2022_may.csv        vs B&H   +3677 | vs no operar   +3324 | órdenes    12
+  practica_apple_2023.csv          vs B&H   +1426 | vs no operar   +1797 | órdenes     6
+  practica_tesla_2022.csv          vs B&H    +271 | vs no operar    +266 | órdenes     4
+  -> supera a comprar y mantener en 3/3 series | promedio vs B&H +1791
+
+TomaGanancia {'umbral': 8, 'caida': 5, 'recompra': 10}
+  practica_amd_2022_may.csv        vs B&H   +2185 | vs no operar   +1832 | órdenes     9
+  practica_apple_2023.csv          vs B&H   +3228 | vs no operar   +3599 | órdenes    11
+  practica_tesla_2022.csv          vs B&H    +269 | vs no operar    +264 | órdenes     4
+  -> supera a comprar y mantener en 3/3 series | promedio vs B&H +1894
+
+TomaGanancia {'umbral': 7, 'caida': 5, 'recompra': 10}
+  practica_amd_2022_may.csv        vs B&H   +2185 | vs no operar   +1832 | órdenes     9
+  practica_apple_2023.csv          vs B&H   +1857 | vs no operar   +2228 | órdenes     8
+  practica_tesla_2022.csv          vs B&H    +269 | vs no operar    +264 | órdenes     4
+  -> supera a comprar y mantener en 3/3 series | promedio vs B&H +1437
+
+TomaGanancia {'umbral': 7, 'caida': 4, 'recompra': 10}
+  practica_amd_2022_may.csv        vs B&H   +2114 | vs no operar   +1761 | órdenes     9
+  practica_apple_2023.csv          vs B&H    -192 | vs no operar    +179 | órdenes     2
+  practica_tesla_2022.csv          vs B&H    +269 | vs no operar    +264 | órdenes     4
+  -> supera a comprar y mantener en 2/3 series | promedio vs B&H +730
+
+TomaGanancia {'umbral': 6, 'caida': 4, 'recompra': 10}
+  practica_amd_2022_may.csv        vs B&H   +4022 | vs no operar   +3669 | órdenes    18
+  practica_apple_2023.csv          vs B&H    -192 | vs no operar    +179 | órdenes     2
+  practica_tesla_2022.csv          vs B&H    +269 | vs no operar    +264 | órdenes     4
+  -> supera a comprar y mantener en 2/3 series | promedio vs B&H +1366
+
+Gráficos de las 6 mejores combinaciones:
+  /home/agustin/Proyectos/ArquitecturaDeComputadores/Proyecto_4_Arqui/trading_sim/graficos_barrido/TomaGanancia/practica_amd_2022_may.png
+  /home/agustin/Proyectos/ArquitecturaDeComputadores/Proyecto_4_Arqui/trading_sim/graficos_barrido/TomaGanancia/practica_apple_2023.png
+  /home/agustin/Proyectos/ArquitecturaDeComputadores/Proyecto_4_Arqui/trading_sim/graficos_barrido/TomaGanancia/practica_tesla_2022.png
