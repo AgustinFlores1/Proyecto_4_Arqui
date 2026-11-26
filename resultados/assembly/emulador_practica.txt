@@ -1,0 +1,18 @@
+
+=== practica (20000 ticks)
+  trade.s (emulado)
+    Patrimonio final:          13881
+    Ordenes ejecutadas:        124
+    Perdida maxima:            3950
+    Peor caso precio->decision: 78 ciclos (disponibles: 2262)
+    IC por tick:               promedio 32.0, máximo 35
+    Ciclos por tick:           promedio 72.5, máximo 78
+    CPI:                       2.27
+  Python (CruceMedias)
+    Patrimonio final:          13881
+    Ordenes ejecutadas:        124
+    Perdida maxima:            3950
+  No operar:                   10000
+  Comprar y mantener:          9695
+  Decisiones iguales:          20000/20000 ticks
+  Decisiones de Python en decisiones_python.csv

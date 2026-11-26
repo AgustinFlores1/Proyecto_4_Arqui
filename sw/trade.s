@@ -30,7 +30,6 @@ inicio:
         addi  x13, x0, 0         # p = 0
         addi  x14, x0, 0         # S_c = 0
         addi  x15, x0, 0         # S_l = 0
-        addi  x7, x0, 128        # límite de limpiar: 32 posiciones × 4 bytes
 
 limpiar:
         add   x8, x11, x12       # dirección = buf + idx

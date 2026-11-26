@@ -17,8 +17,12 @@ Para probar el botón de reset (mismo escenario que tb/tb_reset.sv):
     diff decisiones_reset.csv decisiones_python.csv
 
 Con varias series escribe un CSV por serie: decisiones_python_<serie>.csv
+
+Perfil por sección (ciclos e instrucciones por etiqueta de trade.s):
+    python trading_sim/emular.py sw/trade.hex tb/practica.csv --perfil sw/trade.s
 """
 import sys
+from collections import defaultdict
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))   # para importar market y algorithms desde cualquier carpeta
@@ -69,6 +73,7 @@ class Espino:
         self.botones = 0              # estado de los 4 botones (bits 3:0), se lee en 0x8000_0008
         self.instr = 0                # instrucciones ejecutadas en total
         self.cyc = 0                  # ciclos en total
+        self.por_pc = defaultdict(lambda: [0, 0])   # por dirección: [veces ejecutada, ciclos]
 
     def load(self, a: int) -> int:  # lectura de memoria o de un registro del SPI
         if a == SPI:
@@ -122,6 +127,9 @@ class Espino:
             raise ValueError(f"instrucción no soportada por el emulador: {i:08x} en {self.pc:#x}")
         if wr is not None and rd:
             self.r[rd] = u32(wr)                  # x0 nunca se escribe
+        e = self.por_pc[self.pc]                  # perfil de esta instrucción
+        e[0] += 1
+        e[1] += c
         self.pc = nxt
         self.instr += 1
         self.cyc += c
@@ -207,6 +215,52 @@ def imprimir(titulo: str, r: dict) -> None:  # resumen con las mismas líneas qu
 
 
 # ---------------------------------------------------------------------------
+# Perfil por sección
+# ---------------------------------------------------------------------------
+
+AGRUPAR = {"con_acciones": "decidir", "sin_acciones": "decidir", "limpiar": "inicio"}   # etiquetas que se suman a otra sección
+
+
+def etiquetas(ruta_s: str) -> list[tuple[int, str]]:  # (dirección, etiqueta) de cada etiqueta de trade.s
+    salida, direccion = [], 0                     # etiquetas encontradas, dirección de la próxima instrucción
+    for linea in open(ruta_s):
+        linea = linea.split("#")[0].strip()       # sin comentarios
+        if not linea:
+            continue
+        if ":" in linea.split()[0]:               # "etiqueta:" o "etiqueta: instrucción"
+            nombre, _, resto = linea.partition(":")
+            salida.append((direccion, nombre.strip()))
+            linea = resto.strip()
+        if linea:
+            direccion += 4                        # cada instrucción (también j, mv, nop) ocupa una palabra
+    return salida
+
+
+def seccion(pc: int, marcas: list[tuple[int, str]]) -> str:  # sección a la que pertenece una dirección
+    nombre = "?"
+    for direccion, etiqueta in marcas:
+        if direccion <= pc:
+            nombre = etiqueta
+    return AGRUPAR.get(nombre, nombre)
+
+
+def imprimir_perfil(cpu: "Espino", marcas: list[tuple[int, str]], ticks: int) -> None:  # ciclos e IC por sección, por tick
+    tabla = defaultdict(lambda: [0, 0])           # sección -> [instrucciones, ciclos]
+    for pc, (veces, ciclos) in cpu.por_pc.items():
+        t = tabla[seccion(pc, marcas)]
+        t[0] += veces
+        t[1] += ciclos
+    total = sum(c for _, c in tabla.values())
+    print("  Perfil por sección (promedio por tick, sin la inicialización):")
+    print(f"    {'sección':12s} {'IC':>6s} {'ciclos':>8s} {'% ciclos':>9s}")
+    orden = [e for _, e in marcas]                # mismo orden que en el programa
+    for nombre in sorted(tabla, key=lambda n: orden.index(n) if n in orden else 99):
+        ic, cy = tabla[nombre]
+        print(f"    {nombre:12s} {ic / ticks:6.1f} {cy / ticks:8.1f} {100 * cy / total:8.1f}%")
+    print(f"    {'total':12s} {sum(i for i, _ in tabla.values()) / ticks:6.1f} {total / ticks:8.1f}")
+
+
+# ---------------------------------------------------------------------------
 # Programa principal
 # ---------------------------------------------------------------------------
 
@@ -225,6 +279,11 @@ def main() -> None:  # emula trade.s y Python en cada serie, imprime el resumen 
         i = args.index("--ticks")
         ticks = int(args[i + 1])
         del args[i:i + 2]
+    perfil = None                                 # ruta de trade.s para el perfil por sección (None = sin perfil)
+    if "--perfil" in args:
+        i = args.index("--perfil")
+        perfil = args[i + 1]
+        del args[i:i + 2]
     hexfile, series = args[0], args[1:]
 
     for ruta in map(Path, series):
@@ -233,6 +292,7 @@ def main() -> None:  # emula trade.s y Python en cada serie, imprime el resumen 
 
         cpu = Espino(hexfile)
         cpu.arrancar()
+        cpu.por_pc.clear()                        # el perfil cuenta solo los ticks, no la inicialización
         asm, ics, ciclos = [], [], []             # bytes escritos, IC y ciclos de cada tick
         for n, p in enumerate(precios):
             d, ic, cy = cpu.tick(p)
@@ -259,6 +319,8 @@ def main() -> None:  # emula trade.s y Python en cada serie, imprime el resumen 
         print(f"    IC por tick:               promedio {sum(ics) / len(ics):.1f}, máximo {max(ics)}")
         print(f"    Ciclos por tick:           promedio {sum(ciclos) / len(ciclos):.1f}, máximo {max(ciclos)}")
         print(f"    CPI:                       {sum(ciclos) / sum(ics):.2f}")
+        if perfil:
+            imprimir_perfil(cpu, etiquetas(perfil), len(precios))
         imprimir("Python (CruceMedias)", r_py)
         print(f"  No operar:                   {CAJA0}")
         print(f"  Comprar y mantener:          {r_py['bh']}")

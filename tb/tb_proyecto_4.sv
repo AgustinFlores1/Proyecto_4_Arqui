@@ -12,7 +12,7 @@ module tb_proyecto_4;
   localparam string PROGRAMA   = "sw/trade.hex";
   localparam string SERIE      = "tb/practica.csv";
   localparam int    PERIODO_NS = 100000;   // ronda 1: 10000000, ronda 2: 1000000, ronda 3: 100000
-  localparam int    NTICKS     = 2000;     // la serie completa tiene 20000
+  localparam int    NTICKS     = 20000;     // la serie completa tiene 20000
 
   localparam int CAJA0    = 10000;
   localparam int COMISION = 5;
@@ -84,18 +84,27 @@ module tb_proyecto_4;
     if (peak - w > max_dd) max_dd = peak - w;
   endtask
 
-  // Mide los ciclos entre que llega el precio y el programa escribe DECISION
+// Mide IC y ciclos entre que llega el precio y el programa escribe DECISION
   int ciclos = 0, peor_caso = 0, respuestas = 0, precios_perdidos = 0;
+  int ic = 0, ic_peor = 0;                 // instrucciones del tick actual / peor caso
+  longint suma_ciclos = 0, suma_ic = 0;    // para los promedios
+  int fd_ciclos;                           // ciclos_por_tick.csv
   bit esperando = 0;
 
   always @(posedge clk) begin
     ciclos++;
+    if (esperando && dut.u_core.u_id.commit) ic++;           // una instrucción terminó en este ciclo
     if (dut.u_spi.byte_done) begin
-      if (dut.u_spi.new_price_q) precios_perdidos++;      // el precio anterior no se leyó
+      if (dut.u_spi.new_price_q) precios_perdidos++;
       ciclos = 0;
+      ic = 0;
       esperando = 1;
     end else if (esperando && dut.u_spi.wr && dut.u_spi.off == 2) begin
       if (ciclos > peor_caso) peor_caso = ciclos;
+      if (ic > ic_peor) ic_peor = ic;
+      suma_ciclos += ciclos;
+      suma_ic += ic;
+      $fdisplay(fd_ciclos, "%0d,%0d,%0d", respuestas, ic, ciclos);
       respuestas++;
       esperando = 0;
     end
@@ -118,6 +127,10 @@ module tb_proyecto_4;
     leer_serie();
     fd = $fopen("decisiones.csv", "w");
     $fdisplay(fd, "tick,precio,decision,caja,acciones,patrimonio");
+
+    fd_ciclos = $fopen("ciclos_por_tick.csv", "w");
+    $fdisplay(fd_ciclos, "tick,ic,ciclos");
+
     #4000;
 
     for (int n = 0; n < NTICKS; n++) begin
@@ -138,6 +151,13 @@ module tb_proyecto_4;
     $display("No operar:                 %0d", CAJA0);
     $display("Comprar y mantener:        %0d", ref_w);
     $display("Peor caso precio->decision: %0d ciclos (disponibles: %0d)", peor_caso, presupuesto);
+
+    $fclose(fd_ciclos);
+    $display("IC por tick:               promedio %0.1f, peor caso %0d", real'(suma_ic) / respuestas, ic_peor);
+    $display("Ciclos por tick:           promedio %0.1f, peor caso %0d", real'(suma_ciclos) / respuestas, peor_caso);
+    $display("CPI:                       %0.2f", real'(suma_ciclos) / suma_ic);
+    $display("Detalle de IC y ciclos en ciclos_por_tick.csv");
+
     $display("Detalle por tick en decisiones.csv");
 
     chequear(bits_x == 0,           "MISO sin valores X");
