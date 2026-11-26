@@ -1,0 +1,12 @@
+      198   SB_CARRY
+       92   SB_DFF
+       40   SB_DFFE
+      158   SB_DFFER
+       10   SB_DFFR
+        4   SB_DFFS
+       12   SB_DFFSR
+     1046   SB_LUT4
+       13   SB_RAM40_4K
+Info: 	         ICESTORM_LC:    1241/   1280    96%
+Info: 	        ICESTORM_RAM:      13/     16    81%
+Info: Max frequency for clock 'i_Clk$SB_IO_IN_$glb_clk': 45.49 MHz (PASS at 25.00 MHz)

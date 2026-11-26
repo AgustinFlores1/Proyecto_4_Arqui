@@ -71,9 +71,27 @@ class Espino:
         self.new = 0                  # bit 0 de STATUS: hay un precio sin leer
         self.decision = None          # último byte escrito en DECISION en este tick (None = todavía no)
         self.botones = 0              # estado de los 4 botones (bits 3:0), se lee en 0x8000_0008
+        self.sma_limpiar()            # periférico de media móvil (variante A): se limpia al encender
         self.instr = 0                # instrucciones ejecutadas en total
         self.cyc = 0                  # ciclos en total
         self.por_pc = defaultdict(lambda: [0, 0])   # por dirección: [veces ejecutada, ciclos]
+
+    def sma_limpiar(self) -> None:  # periférico de media móvil: buffer y sumas en 0 (como pochoco_sma.v)
+        self.sma_mem = [0] * 32       # los últimos 32 precios
+        self.sma_idx = 0              # posición del más viejo
+        self.sma_sl = 0               # suma de 32 (13 bits)
+        self.sma_sc = 0               # suma de 8 (11 bits)
+
+    def sma_precio(self, p: int) -> None:  # lo que hace pochoco_sma.v al llegar un precio, con sus anchos de bits
+        viejo32 = self.sma_mem[self.sma_idx]
+        viejo8 = self.sma_mem[(self.sma_idx + 24) % 32]
+        self.sma_mem[self.sma_idx] = p
+        self.sma_sl = (self.sma_sl + p - viejo32) & 0x1FFF
+        self.sma_sc = (self.sma_sc + p - viejo8) & 0x7FF
+        self.sma_idx = (self.sma_idx + 1) % 32
+
+    def sma_d(self) -> int:  # D = 4*s_c - s_l en 14 bits con signo, extendido a 32
+        return u32(sx(((self.sma_sc << 2) - self.sma_sl) & 0x3FFF, 14))
 
     def load(self, a: int) -> int:  # lectura de memoria o de un registro del SPI
         if a == SPI:
@@ -81,6 +99,8 @@ class Espino:
         if a == SPI + 4:
             self.new = 0                          # leer PRICE baja new_price
             return self.price
+        if a == SPI + 12:
+            return self.sma_d()                   # D del periférico de media móvil
         if a == 0x80000008:
             return self.botones                   # botones de la placa
         assert a < 2048 and a % 4 == 0, f"lectura fuera de la RAM: {a:#x}"
@@ -89,6 +109,9 @@ class Espino:
     def store(self, a: int, v: int) -> None:  # escritura en memoria, en DECISION o en los periféricos
         if a == SPI + 8:
             self.decision = v & 0xFF              # DECISION: solo el byte bajo
+            return
+        if a == SPI + 12:
+            self.sma_limpiar()                    # escribir en 0x0C reinicia el periférico
             return
         if a >= 0x80000000:
             return                                # display y LEDs: se ignoran
@@ -151,6 +174,7 @@ class Espino:
 
     def tick(self, precio: int) -> tuple[int, int, int]:  # entrega un precio y corre hasta que se escribe DECISION
         self.price, self.new, self.decision = precio, 1, None
+        self.sma_precio(precio)                   # el periférico termina 3 ciclos después de byte_done, antes de que la CPU lea D
         i0, c0 = self.instr, self.cyc                              # contadores al llegar el precio
         while self.decision is None:
             self.step()

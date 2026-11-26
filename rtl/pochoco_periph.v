@@ -26,24 +26,20 @@ module pochoco_periph (
   wire [5:0] off    = addr_i[7:2];
   wire       access = sel_i & req_i;
 
-  // LEDs and raw digit registers
-  reg [3:0]  led_q;
   reg [7:0]  digit_q;
   
   always @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
-      led_q   <= 4'b0;
       digit_q <= 8'b0;
     end else if (access & we_i) begin
       case (off)
         6'd0: digit_q <= wdata_i[7:0];
-        6'd1: led_q   <= wdata_i[3:0];
         default: ;
       endcase
     end
   end
 
-  assign leds_o = led_q;
+  assign leds_o = 4'b0;     // LEDs eliminados para liberar celdas lógicas (siempre apagados)
 
   // Hex to 7-segment decoder function
   function [6:0] hex2seg;

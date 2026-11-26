@@ -20,7 +20,7 @@
 module tb_reset;
 
   // Configuración
-  localparam string PROGRAMA   = "sw/trade.hex";
+  parameter string PROGRAMA   = "sw/trade.hex";
   localparam string SERIE      = "tb/practica.csv";
   localparam int    PERIODO_NS = 100000;   // ronda 3
   localparam int    NTICKS     = 2000;

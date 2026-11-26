@@ -21,8 +21,8 @@ ASC  := $(TOP).asc
 BIN  := $(TOP).bin
 
 # Assembly Sources
-SS   := sw/trade.s
-HEX  := sw/trade.hex
+SS   ?= sw/trade.s
+HEX  ?= sw/trade.hex
 
 .PHONY: all prog clean asm sim
 
@@ -31,7 +31,7 @@ all: asm prog
 
 # Step 1: Synthesis using Yosys
 $(JSON): $(SRC) $(HEX)
-	yosys -p "read_verilog $(SRC); synth_ice40 -top $(TOP) -json ${TOP}.json; stat"
+	yosys -p "read_verilog $(SRC); chparam -set MemFile \"$(HEX)\" $(TOP); synth_ice40 -top $(TOP) -json ${TOP}.json; stat"
 
 # Step 2: Place and Route using NextPNR
 $(ASC): $(JSON) $(PCF)
@@ -53,13 +53,17 @@ asm: $(HEX)
 
 # Runs the course testbench (tb/tb_proyecto_4.sv)
 sim: asm
-	iverilog -g2012 -s tb_proyecto_4 -o tb_p4 $$(yosys-config --datdir)/ice40/cells_sim.v $(SRC) tb/tb_proyecto_4.sv
+	iverilog -g2012 -s tb_proyecto_4 -P'tb_proyecto_4.PROGRAMA="$(HEX)"' -o tb_p4 $$(yosys-config --datdir)/ice40/cells_sim.v $(SRC) tb/tb_proyecto_4.sv
 	vvp -n tb_p4
 
 sim_reset: asm
-	iverilog -g2012 -s tb_reset -o tb_reset $$(yosys-config --datdir)/ice40/cells_sim.v $(SRC) tb/tb_reset.sv
+	iverilog -g2012 -s tb_reset -P'tb_reset.PROGRAMA="$(HEX)"' -o tb_reset $$(yosys-config --datdir)/ice40/cells_sim.v $(SRC) tb/tb_reset.sv
 	vvp -n tb_reset
+
+sim_sma:
+	iverilog -g2012 -s tb_sma -o tb_sma $$(yosys-config --datdir)/ice40/cells_sim.v $(SRC) tb/tb_sma.sv
+	vvp -n tb_sma
 
 # Clean up generated files
 clean:
-	rm -f $(JSON) $(ASC) $(BIN) $(HEX) tb_p4 tb_reset
+	rm -f $(JSON) $(ASC) $(BIN) $(HEX) tb_p4 tb_reset tb_sma

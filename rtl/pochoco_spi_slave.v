@@ -30,7 +30,8 @@ module pochoco_spi_slave (
   // Register offsets
   localparam [5:0] REG_STATUS   = 6'd0,
                    REG_PRICE    = 6'd1,
-                   REG_DECISION = 6'd2;
+                   REG_DECISION = 6'd2,
+                   REG_SMA      = 6'd3;
 
   wire [5:0] off    = addr_i[7:2];
   wire       access = sel_i & req_i;
@@ -100,6 +101,21 @@ module pochoco_spi_slave (
     end
   end
 
+    // Periférico de media móvil (variante A): se actualiza solo con cada precio recibido
+  wire signed [13:0] sma_d;                                   // D = 4*S_c - S_l
+  wire               sma_ocupado;                             // 1 mientras actualiza o limpia
+  wire               sma_limpiar = wr & (off == REG_SMA);     // cualquier escritura en 0x0C lo reinicia
+
+  pochoco_sma u_sma (
+    .clk_i     (clk_i),
+    .rst_ni    (rst_ni),
+    .start_i   (byte_done),
+    .precio_i  (price_q),                                     // el precio recibido (estable hasta el próximo byte)
+    .limpiar_i (sma_limpiar),
+    .d_o       (sma_d),
+    .ocupado_o (sma_ocupado)
+  );
+
   // CPU writes DECISION byte
   always @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni)                          tx_hold <= 8'h00;
@@ -112,6 +128,7 @@ module pochoco_spi_slave (
       case (off)
         REG_STATUS: rdata_o <= {30'b0, cs_active, new_price_q};
         REG_PRICE:  rdata_o <= {24'b0, price_q};
+        REG_SMA:    rdata_o <= {{18{sma_d[13]}}, sma_d};
         default:    rdata_o <= 32'b0;
       endcase
     end
