@@ -1,0 +1,7 @@
+IC por tick:              promedio 31.2, peor caso 37
+Ciclos por tick:          promedio 69.5, peor caso 81
+CPI:                      2.23
+Tiempo por tick:          promedio 2.78 us, peor caso 3.24 us
+Decisiones por segundo:   359712 (25 MHz / ciclos promedio)
+MIPS del core:            11.21 (25 MHz / CPI)
+Uso del plazo, peor caso: ronda 1 0.032%, ronda 2 0.33%, ronda 3 3.6%

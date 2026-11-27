@@ -51,6 +51,6 @@ BandasDesviacion {'k': 6, 'N': 2}
   -> supera a comprar y mantener en 2/3 series | promedio vs B&H -4
 
 Gráficos de las 6 mejores combinaciones:
-  /home/agustin/Proyectos/ArquitecturaDeComputadores/Proyecto_4_Arqui/trading_sim/graficos_barrido/BandasDesviacion/practica_amd_2022_may.png
-  /home/agustin/Proyectos/ArquitecturaDeComputadores/Proyecto_4_Arqui/trading_sim/graficos_barrido/BandasDesviacion/practica_apple_2023.png
-  /home/agustin/Proyectos/ArquitecturaDeComputadores/Proyecto_4_Arqui/trading_sim/graficos_barrido/BandasDesviacion/practica_tesla_2022.png
+  /Users/agustin._.flores/Documents_Local/UandesActual/ArquitecturaDeComputadores/Proyecto_4_Arqui/trading_sim/graficos_barrido/BandasDesviacion/practica_amd_2022_may.png
+  /Users/agustin._.flores/Documents_Local/UandesActual/ArquitecturaDeComputadores/Proyecto_4_Arqui/trading_sim/graficos_barrido/BandasDesviacion/practica_apple_2023.png
+  /Users/agustin._.flores/Documents_Local/UandesActual/ArquitecturaDeComputadores/Proyecto_4_Arqui/trading_sim/graficos_barrido/BandasDesviacion/practica_tesla_2022.png

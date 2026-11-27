@@ -1,7 +1,6 @@
 # Virtual Environments & Editor Files
 .venv/
 venv/
-.DS_Store
 
 # Python & Test Artifacts
 __pycache__/
@@ -30,3 +29,5 @@ tb_p4
 tb_reset
 tb_sma
 tb_custom
+
+.DS_Store

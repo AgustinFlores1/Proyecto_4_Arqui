@@ -6,6 +6,7 @@
 #   - sim_reset.txt             salida del testbench del botón de reset
 #   - yosys.log, nextpnr.log    síntesis y place & route
 #   - recursos.txt              celdas lógicas, BRAM y frecuencia máxima
+#   - metricas.txt              IC, ciclos, CPI, tiempo, decisiones/s, MIPS y uso del plazo de cada ronda
 #   Solo para la versión base (sw/trade.s), la comparación con Python:
 #   - decisiones_python.csv     las mismas columnas, calculadas por la versión de referencia
 #   - diff_decisiones.txt       comparación de los dos CSV (vacío + "idénticas" = iguales)
@@ -77,5 +78,21 @@ grep -E "SB_LUT4|SB_DFF|SB_CARRY|SB_RAM40_4K" $ASM/yosys.log | tail -9 > $ASM/re
 grep -E "ICESTORM_LC:|ICESTORM_RAM:" $ASM/nextpnr.log | tail -2 >> $ASM/recursos.txt
 grep -E "Max frequency for clock" $ASM/nextpnr.log | tail -1 >> $ASM/recursos.txt
 cat $ASM/recursos.txt
+
+# 4. Métricas calculadas a partir del testbench (reloj de 25 MHz = 40 ns por ciclo)
+awk '
+/IC por tick/     { gsub(",", "", $5); ic_prom = $5; ic_peor = $8 }
+/Ciclos por tick/ { gsub(",", "", $5); cy_prom = $5; cy_peor = $8 }
+/^CPI/            { cpi = $2 }
+END {
+    printf "IC por tick:              promedio %s, peor caso %s\n", ic_prom, ic_peor
+    printf "Ciclos por tick:          promedio %s, peor caso %s\n", cy_prom, cy_peor
+    printf "CPI:                      %s\n", cpi
+    printf "Tiempo por tick:          promedio %.2f us, peor caso %.2f us\n", cy_prom * 0.04, cy_peor * 0.04
+    printf "Decisiones por segundo:   %.0f (25 MHz / ciclos promedio)\n", 25000000 / cy_prom
+    printf "MIPS del core:            %.2f (25 MHz / CPI)\n", 25 / cpi
+    printf "Uso del plazo, peor caso: ronda 1 %.3f%%, ronda 2 %.2f%%, ronda 3 %.1f%%\n", \
+           100 * cy_peor / 249762, 100 * cy_peor / 24762, 100 * cy_peor / 2262
+}' $ASM/sim_practica.txt | tee $ASM/metricas.txt
 
 echo "Listo: resultados en $ASM/"

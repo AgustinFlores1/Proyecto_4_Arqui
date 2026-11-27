@@ -57,6 +57,6 @@ TomaGanancia {'umbral': 6, 'caida': 4, 'recompra': 10}
   -> supera a comprar y mantener en 2/3 series | promedio vs B&H +1366
 
 Gráficos de las 6 mejores combinaciones:
-  /home/agustin/Proyectos/ArquitecturaDeComputadores/Proyecto_4_Arqui/trading_sim/graficos_barrido/TomaGanancia/practica_amd_2022_may.png
-  /home/agustin/Proyectos/ArquitecturaDeComputadores/Proyecto_4_Arqui/trading_sim/graficos_barrido/TomaGanancia/practica_apple_2023.png
-  /home/agustin/Proyectos/ArquitecturaDeComputadores/Proyecto_4_Arqui/trading_sim/graficos_barrido/TomaGanancia/practica_tesla_2022.png
+  /Users/agustin._.flores/Documents_Local/UandesActual/ArquitecturaDeComputadores/Proyecto_4_Arqui/trading_sim/graficos_barrido/TomaGanancia/practica_amd_2022_may.png
+  /Users/agustin._.flores/Documents_Local/UandesActual/ArquitecturaDeComputadores/Proyecto_4_Arqui/trading_sim/graficos_barrido/TomaGanancia/practica_apple_2023.png
+  /Users/agustin._.flores/Documents_Local/UandesActual/ArquitecturaDeComputadores/Proyecto_4_Arqui/trading_sim/graficos_barrido/TomaGanancia/practica_tesla_2022.png

@@ -66,22 +66,22 @@ Info:     at initial placer iter 1, wirelen = 534
 Info:     at initial placer iter 2, wirelen = 566
 Info:     at initial placer iter 3, wirelen = 606
 Info: Running main analytical placer, max placement attempts per cell = 166464.
-Info:     at iteration #1, type ALL: wirelen solved = 554, spread = 8427, legal = 8899; time = 0.02s
-Info:     at iteration #2, type ALL: wirelen solved = 650, spread = 7983, legal = 8598; time = 0.02s
+Info:     at iteration #1, type ALL: wirelen solved = 554, spread = 8427, legal = 8899; time = 0.01s
+Info:     at iteration #2, type ALL: wirelen solved = 650, spread = 7983, legal = 8598; time = 0.01s
 Info:     at iteration #3, type ALL: wirelen solved = 624, spread = 8064, legal = 9205; time = 0.01s
-Info:     at iteration #4, type ALL: wirelen solved = 824, spread = 8225, legal = 9162; time = 0.02s
+Info:     at iteration #4, type ALL: wirelen solved = 824, spread = 8225, legal = 9162; time = 0.01s
 Info:     at iteration #5, type ALL: wirelen solved = 903, spread = 8177, legal = 8979; time = 0.02s
-Info:     at iteration #6, type ALL: wirelen solved = 989, spread = 8451, legal = 9079; time = 0.02s
+Info:     at iteration #6, type ALL: wirelen solved = 989, spread = 8451, legal = 9079; time = 0.01s
 Info:     at iteration #7, type ALL: wirelen solved = 1035, spread = 8052, legal = 8391; time = 0.01s
-Info:     at iteration #8, type ALL: wirelen solved = 1134, spread = 8274, legal = 9124; time = 0.02s
-Info:     at iteration #9, type ALL: wirelen solved = 1229, spread = 8168, legal = 9180; time = 0.02s
+Info:     at iteration #8, type ALL: wirelen solved = 1134, spread = 8274, legal = 9124; time = 0.01s
+Info:     at iteration #9, type ALL: wirelen solved = 1229, spread = 8168, legal = 9180; time = 0.01s
 Info:     at iteration #10, type ALL: wirelen solved = 1257, spread = 7843, legal = 8628; time = 0.01s
 Info:     at iteration #11, type ALL: wirelen solved = 1295, spread = 7935, legal = 8880; time = 0.01s
-Info:     at iteration #12, type ALL: wirelen solved = 1370, spread = 8042, legal = 8836; time = 0.02s
-Info: HeAP Placer Time: 0.30s
-Info:   of which solving equations: 0.16s
+Info:     at iteration #12, type ALL: wirelen solved = 1370, spread = 8042, legal = 8836; time = 0.01s
+Info: HeAP Placer Time: 0.22s
+Info:   of which solving equations: 0.13s
 Info:   of which spreading cells: 0.01s
-Info:   of which strict legalisation: 0.06s
+Info:   of which strict legalisation: 0.05s
 
 Info: Running simulated annealing placer for refinement.
 Info:   at iteration #1: temp = 0.000000, timing cost = 534, wirelen = 8391
@@ -91,7 +91,7 @@ Info:   at iteration #15: temp = 0.000000, timing cost = 642, wirelen = 6126
 Info:   at iteration #20: temp = 0.000000, timing cost = 618, wirelen = 5994
 Info:   at iteration #25: temp = 0.000000, timing cost = 627, wirelen = 5956
 Info:   at iteration #25: temp = 0.000000, timing cost = 627, wirelen = 5958 
-Info: SA placement time 0.54s
+Info: SA placement time 0.42s
 
 Info: Max frequency for clock 'i_Clk$SB_IO_IN_$glb_clk': 45.38 MHz (PASS at 25.00 MHz)
 
@@ -129,22 +129,22 @@ Info: Routing 3976 arcs.
 Info:            |   (re-)routed arcs  |   delta    | remaining|       time spent     |
 Info:    IterCnt |  w/ripup   wo/ripup |  w/r  wo/r |      arcs| batch(sec) total(sec)|
 Info:       1000 |      333        666 |  333   666 |      3417|       0.22       0.22|
-Info:       2000 |      745       1254 |  412   588 |      3050|       0.14       0.36|
-Info:       3000 |     1114       1885 |  369   631 |      2675|       0.15       0.51|
-Info:       4000 |     1530       2435 |  416   550 |      2264|       0.16       0.66|
-Info:       5000 |     1974       2942 |  444   507 |      1832|       0.10       0.77|
-Info:       6000 |     2441       3475 |  467   533 |      1478|       0.09       0.86|
-Info:       7000 |     3000       3890 |  559   415 |      1226|       0.10       0.96|
-Info:       8000 |     3583       4307 |  583   417 |      1099|       0.15       1.11|
-Info:       9000 |     4240       4650 |  657   343 |       976|       0.19       1.30|
-Info:      10000 |     4664       5177 |  424   527 |       667|       0.14       1.44|
-Info:      11000 |     5249       5591 |  585   414 |       575|       0.17       1.61|
-Info:      12000 |     5861       5979 |  612   388 |       492|       0.23       1.84|
-Info:      13000 |     6513       6327 |  652   348 |       411|       0.26       2.10|
-Info:      14000 |     7000       6836 |  487   509 |        54|       0.40       2.50|
-Info:      14163 |     7075       6925 |   75    89 |         0|       0.05       2.55|
+Info:       2000 |      745       1254 |  412   588 |      3050|       0.13       0.35|
+Info:       3000 |     1114       1885 |  369   631 |      2675|       0.15       0.50|
+Info:       4000 |     1530       2435 |  416   550 |      2264|       0.14       0.64|
+Info:       5000 |     1974       2942 |  444   507 |      1832|       0.10       0.74|
+Info:       6000 |     2441       3475 |  467   533 |      1478|       0.09       0.83|
+Info:       7000 |     3000       3890 |  559   415 |      1226|       0.10       0.94|
+Info:       8000 |     3583       4307 |  583   417 |      1099|       0.16       1.10|
+Info:       9000 |     4240       4650 |  657   343 |       976|       0.15       1.25|
+Info:      10000 |     4664       5177 |  424   527 |       667|       0.14       1.39|
+Info:      11000 |     5249       5591 |  585   414 |       575|       0.20       1.58|
+Info:      12000 |     5861       5979 |  612   388 |       492|       0.22       1.80|
+Info:      13000 |     6513       6327 |  652   348 |       411|       0.25       2.05|
+Info:      14000 |     7000       6836 |  487   509 |        54|       0.21       2.26|
+Info:      14163 |     7075       6925 |   75    89 |         0|       0.04       2.30|
 Info: Routing complete.
-Info: Router1 time 2.55s
+Info: Router1 time 2.30s
 Info: Checksum: 0xce9d5ca0
 
 Info: Critical path report for clock 'i_Clk$SB_IO_IN_$glb_clk' (posedge -> posedge):

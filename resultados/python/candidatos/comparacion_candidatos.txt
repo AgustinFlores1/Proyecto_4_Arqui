@@ -36,7 +36,7 @@ RSI fijo (N 46, 4/14): patrimonio 9756 | caja 21 | acciones 59 | órdenes 3 | co
 Cruce de medias (8/32, margen 2): patrimonio 17526 | caja 17526 | acciones 0 | órdenes 134 | comisiones 670 | pérdida máx 3324
 Toma de ganancia (7/5/10): patrimonio 15912 | caja 15912 | acciones 0 | órdenes 24 | comisiones 120 | pérdida máx 3727
 
-Gráficos en /home/agustin/Proyectos/ArquitecturaDeComputadores/Proyecto_4_Arqui/resultados/python/candidatos
+Gráficos en /Users/agustin._.flores/Documents_Local/UandesActual/ArquitecturaDeComputadores/Proyecto_4_Arqui/resultados/python/candidatos
 
 ===== Series reservadas (tb/reservadas/)
 
@@ -61,4 +61,4 @@ RSI fijo (N 46, 4/14): patrimonio 10023 | caja 59 | acciones 47 | órdenes 3 | c
 Cruce de medias (8/32, margen 2): patrimonio 13575 | caja 13575 | acciones 0 | órdenes 144 | comisiones 720 | pérdida máx 3174
 Toma de ganancia (7/5/10): patrimonio 10264 | caja 10264 | acciones 0 | órdenes 4 | comisiones 20 | pérdida máx 5390
 
-Gráficos en /home/agustin/Proyectos/ArquitecturaDeComputadores/Proyecto_4_Arqui/resultados/python/candidatos
+Gráficos en /Users/agustin._.flores/Documents_Local/UandesActual/ArquitecturaDeComputadores/Proyecto_4_Arqui/resultados/python/candidatos

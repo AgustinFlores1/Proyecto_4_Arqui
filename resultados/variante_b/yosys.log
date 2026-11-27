@@ -2195,9 +2195,9 @@ ABC: LUT = 713 : 2=86 12.1 %  3=277 38.8 %  4=350 49.1 %  Ave = 3.37
 ABC: Warning: AIG with boxes has internal fanout in 0 complex flops and 40 carries.
 ABC: + &write -n <abc-temp-dir>/output.aig 
 ABC: + &verify 
-ABC: Networks are equivalent.  Time =     0.08 sec
+ABC: Networks are equivalent.  Time =     0.07 sec
 ABC: + time 
-ABC: elapse: 1.16 seconds, total: 1.16 seconds
+ABC: elapse: 0.79 seconds, total: 0.79 seconds
 
 15.43.18.6. Executing AIGER frontend.
 <suppressed ~11 debug messages>
@@ -2554,6 +2554,6 @@ Found and reported 0 problems.
       943   SB_LUT4
        12   SB_RAM40_4K
 
-End of script. Logfile hash: a8a7ee8343, time: 4.73s, user: 3.21s, system: 0.10s, MEM: 54.98 MB peak
+End of script. Logfile hash: c25f3ff994, time: 4.03s, user: 3.05s, system: 0.10s, MEM: 57.70 MB peak
 Yosys 0.68+130 (git sha1 dd83bbad2-dirty, Release, Clang /usr/local/osxcross/target/bin/aarch64-apple-darwin25.5-clang++ 21.1.8)
-Time spent: 52% 11x techmap (2 sec), 21% 1x abc9_exe (0 sec), ...
+Time spent: 53% 11x techmap (2 sec), 20% 1x abc9_exe (0 sec), ...
