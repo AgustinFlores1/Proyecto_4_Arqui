@@ -68,7 +68,7 @@ module espino_id_stage (
   assign rf_ready_o = ops_valid_q;
 
   // Decode
-  wire [3:0]  alu_operator;
+  wire [4:0]  alu_operator;
   wire [1:0]  alu_op_a_sel;
   wire        alu_op_b_sel;
   wire [31:0] imm_operand, imm_target;

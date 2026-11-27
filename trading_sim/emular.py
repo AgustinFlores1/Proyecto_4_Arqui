@@ -141,6 +141,13 @@ class Espino:
                      6: u32(a) < u32(b), 7: u32(a) >= u32(b)}[f3]
             if salta:
                 nxt, c = self.pc + im, 3
+        elif op == 0x0B:    # custom-0 (variante B)
+            if f3 == 0:     # dif rd, rs1, rs2: rd = 4*rs1 - rs2
+                wr = 4 * a - b
+            elif f3 == 1:   # circ rd, rs1, imm: rd = (rs1 + imm) & 0x7C
+                wr = (a + sx(i >> 20, 12)) & 0x7C
+            else:
+                raise ValueError(f"custom-0 no soportada: {i:08x} en {self.pc:#x}")
         elif op == 0x37:    # lui
             wr = i & 0xFFFFF000
         elif op == 0x6F:    # jal (y j)

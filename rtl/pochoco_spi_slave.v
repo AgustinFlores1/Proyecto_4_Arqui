@@ -31,7 +31,7 @@ module pochoco_spi_slave (
   localparam [5:0] REG_STATUS   = 6'd0,
                    REG_PRICE    = 6'd1,
                    REG_DECISION = 6'd2,
-                   REG_SMA      = 6'd3;
+                   REG_SMA      = 6'd3;   // 0x0C: leer = D del periférico de media móvil; escribir = reiniciarlo
 
   wire [5:0] off    = addr_i[7:2];
   wire       access = sel_i & req_i;
@@ -101,10 +101,14 @@ module pochoco_spi_slave (
     end
   end
 
-    // Periférico de media móvil (variante A): se actualiza solo con cada precio recibido
+  // CPU writes DECISION byte
+  // Periférico de media móvil (variante A): solo se sintetiza con USAR_SMA.
+  // Sin USAR_SMA, el registro 0x0C se lee como 0 y escribirlo no hace nada.
   wire signed [13:0] sma_d;                                   // D = 4*S_c - S_l
   wire               sma_ocupado;                             // 1 mientras actualiza o limpia
-  wire               sma_limpiar = wr & (off == REG_SMA);     // cualquier escritura en 0x0C lo reinicia
+
+`ifdef USAR_SMA
+  wire sma_limpiar = wr & (off == REG_SMA);                   // cualquier escritura en 0x0C lo reinicia
 
   pochoco_sma u_sma (
     .clk_i     (clk_i),
@@ -115,8 +119,11 @@ module pochoco_spi_slave (
     .d_o       (sma_d),
     .ocupado_o (sma_ocupado)
   );
+`else
+  assign sma_d       = 14'sd0;
+  assign sma_ocupado = 1'b0;
+`endif
 
-  // CPU writes DECISION byte
   always @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni)                          tx_hold <= 8'h00;
     else if (wr & (off == REG_DECISION))  tx_hold <= wdata_i[7:0];
@@ -126,9 +133,9 @@ module pochoco_spi_slave (
     if (!rst_ni) rdata_o <= 32'b0;
     else if (rd) begin
       case (off)
-        REG_STATUS: rdata_o <= {30'b0, cs_active, new_price_q};
+        REG_STATUS: rdata_o <= {29'b0, sma_ocupado, cs_active, new_price_q};
         REG_PRICE:  rdata_o <= {24'b0, price_q};
-        REG_SMA:    rdata_o <= {{18{sma_d[13]}}, sma_d};
+        REG_SMA:    rdata_o <= {{18{sma_d[13]}}, sma_d};     // D con el signo extendido a 32 bits
         default:    rdata_o <= 32'b0;
       endcase
     end

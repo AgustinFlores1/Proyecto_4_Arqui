@@ -78,6 +78,10 @@ INSTRUCTIONS = {
     # --- J: rd, etiqueta ---  (OPCODE_JAL = 7'h6f, líneas 218-223)
     "jal":   ("J",  0b1101111, None, None),
 
+    # --- custom-0 (variante B, opcode 0x0B): requieren el core sintetizado con USAR_CUSTOM ---
+    "dif":   ("R",  0b0001011, 0b000, 0b0000000),   # dif  rd, rs1, rs2  ->  rd = 4*rs1 - rs2
+    "circ":  ("I",  0b0001011, 0b001, None),        # circ rd, rs1, imm  ->  rd = (rs1 + imm) & 0x7C
+
     # Shifts (sll, srl, sra, slli, srli, srai) NO se incluyen
 }
 

@@ -1,0 +1,15 @@
+iverilog -g2012 -DUSAR_CUSTOM -s tb_reset -P'tb_reset.PROGRAMA="sw/trade_custom.hex"' -o tb_reset $(yosys-config --datdir)/ice40/cells_sim.v ./rtl/pochoco_periph.v ./rtl/pochoco_ram.v ./rtl/pochoco_sma.v ./rtl/pochoco_soc.v ./rtl/pochoco_spi_slave.v ./rtl/espino_core/espino_alu.v ./rtl/espino_core/espino_controller.v ./rtl/espino_core/espino_core.v ./rtl/espino_core/espino_decoder.v ./rtl/espino_core/espino_id_stage.v ./rtl/espino_core/espino_if_stage.v ./rtl/espino_core/espino_load_store_unit.v ./rtl/espino_core/espino_register_file.v tb/tb_reset.sv
+vvp -n tb_reset
+WARNING: ./rtl/pochoco_ram.v:36: $readmemh(sw/trade_custom.hex): Not enough words in the file for the requested range [0:511].
+Tick 500: botón presionado (la maestra tiene 57 acciones del grupo)
+Patrimonio final:          11497
+Ordenes ejecutadas:        9
+Primera orden tras reset:  7f
+Detalle por tick en decisiones_reset.csv
+PASS MISO sin valores X
+PASS el programa lee todos los precios (también después del reset)
+PASS la decision llega antes del siguiente tick
+PASS tras el reset no opera durante el calentamiento
+PASS la primera orden tras el reset es comprar (olvido que tenia acciones)
+Testbenchs aprobados: 5/5
+tb/tb_reset.sv:177: $finish called at 200004000000 (1ps)

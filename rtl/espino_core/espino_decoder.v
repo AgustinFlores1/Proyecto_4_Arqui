@@ -14,7 +14,7 @@ module espino_decoder (
   output reg         illegal_insn_o,
 
   // ALU control
-  output reg  [3:0]  alu_operator_o,
+  output reg  [4:0]  alu_operator_o,     // 5 bits: incluye las operaciones custom-0 (variante B)
   output reg  [1:0]  alu_op_a_sel_o,
   output reg         alu_op_b_sel_o,
   output reg  [31:0] imm_operand_o,
@@ -50,26 +50,29 @@ module espino_decoder (
     OPCODE_BRANCH = 7'h63,
     OPCODE_JALR   = 7'h67,
     OPCODE_JAL    = 7'h6f,
-    OPCODE_SYSTEM = 7'h73;
+    OPCODE_SYSTEM = 7'h73,
+    OPCODE_CUSTOM0 = 7'h0b;   // custom-0: reservado por RISC-V para extensiones propias
 
   // ALU operations
-  localparam [3:0] 
-    ALU_ADD  = 4'd0,
-    ALU_SUB  = 4'd1,
-    ALU_XOR  = 4'd2,
-    ALU_OR   = 4'd3,
-    ALU_AND  = 4'd4,
-    ALU_SLL  = 4'd5,
-    ALU_SRL  = 4'd6,
-    ALU_SRA  = 4'd7,
-    ALU_SLT  = 4'd8,
-    ALU_SLTU = 4'd9,
-    ALU_EQ   = 4'd10,
-    ALU_NE   = 4'd11,
-    ALU_LT   = 4'd12,
-    ALU_GE   = 4'd13,
-    ALU_LTU  = 4'd14,
-    ALU_GEU  = 4'd15;
+  localparam [4:0] 
+    ALU_ADD  = 5'd0,
+    ALU_SUB  = 5'd1,
+    ALU_XOR  = 5'd2,
+    ALU_OR   = 5'd3,
+    ALU_AND  = 5'd4,
+    ALU_SLL  = 5'd5,
+    ALU_SRL  = 5'd6,
+    ALU_SRA  = 5'd7,
+    ALU_SLT  = 5'd8,
+    ALU_SLTU = 5'd9,
+    ALU_EQ   = 5'd10,
+    ALU_NE   = 5'd11,
+    ALU_LT   = 5'd12,
+    ALU_GE   = 5'd13,
+    ALU_LTU  = 5'd14,
+    ALU_GEU  = 5'd15,
+    ALU_DIF  = 5'd16,   // custom-0: 4*a - b
+    ALU_CIRC = 5'd17;   // custom-0: (a + b) & 0x7C
 
   // Operand selects
   localparam [1:0] OP_A_REG  = 2'd0, OP_A_PC   = 2'd1, OP_A_ZERO = 2'd2;
@@ -238,6 +241,26 @@ module espino_decoder (
       OPCODE_SYSTEM: begin
         if (funct3 != 3'b000) illegal_insn_o = 1'b1;
       end
+
+`ifdef USAR_CUSTOM
+      // Variante B: instrucciones a la medida de CruceMedias
+      OPCODE_CUSTOM0: begin
+        alu_op_a_sel_o = OP_A_REG;
+        rf_we_o        = 1'b1;
+        case (funct3)
+          3'b000: begin                          // dif  rd, rs1, rs2  ->  rd = 4*rs1 - rs2   (tipo R)
+            alu_op_b_sel_o = OP_B_REG;
+            alu_operator_o = ALU_DIF;
+          end
+          3'b001: begin                          // circ rd, rs1, imm  ->  rd = (rs1 + imm) & 0x7C   (tipo I)
+            alu_op_b_sel_o = OP_B_IMM;
+            imm_operand_o  = imm_i;
+            alu_operator_o = ALU_CIRC;
+          end
+          default: illegal_insn_o = 1'b1;
+        endcase
+      end
+`endif
 
       default: illegal_insn_o = 1'b1;
     endcase

@@ -8,30 +8,37 @@
 // Authors:
 // - Nicolás Villegas <navillegas@miuandes.cl>
 
+// Modificado (Proyecto 4, variante B): el operador pasa de 4 a 5 bits para agregar dos
+// operaciones a la medida de CruceMedias (instrucciones custom-0, solo con USAR_CUSTOM):
+//   ALU_DIF  : result = 4*a - b            (D = 4*S_c - S_l en una instrucción)
+//   ALU_CIRC : result = (a + b) & 0x7C     (índice del buffer circular: suma y vuelta a 0 en una instrucción)
+
 module espino_alu (
-  input  wire [3:0]  operator_i,
+  input  wire [4:0]  operator_i,
   input  wire [31:0] operand_a_i,
   input  wire [31:0] operand_b_i,
   output reg  [31:0] result_o,
   output reg         cmp_result_o
 );
 
-  localparam [3:0] ALU_ADD  = 4'd0,
-                   ALU_SUB  = 4'd1,
-                   ALU_XOR  = 4'd2,
-                   ALU_OR   = 4'd3,
-                   ALU_AND  = 4'd4,
-                   ALU_SLL  = 4'd5,
-                   ALU_SRL  = 4'd6,
-                   ALU_SRA  = 4'd7,
-                   ALU_SLT  = 4'd8,
-                   ALU_SLTU = 4'd9,
-                   ALU_EQ   = 4'd10,
-                   ALU_NE   = 4'd11,
-                   ALU_LT   = 4'd12,
-                   ALU_GE   = 4'd13,
-                   ALU_LTU  = 4'd14,
-                   ALU_GEU  = 4'd15;
+  localparam [4:0] ALU_ADD  = 5'd0,
+                   ALU_SUB  = 5'd1,
+                   ALU_XOR  = 5'd2,
+                   ALU_OR   = 5'd3,
+                   ALU_AND  = 5'd4,
+                   ALU_SLL  = 5'd5,
+                   ALU_SRL  = 5'd6,
+                   ALU_SRA  = 5'd7,
+                   ALU_SLT  = 5'd8,
+                   ALU_SLTU = 5'd9,
+                   ALU_EQ   = 5'd10,
+                   ALU_NE   = 5'd11,
+                   ALU_LT   = 5'd12,
+                   ALU_GE   = 5'd13,
+                   ALU_LTU  = 5'd14,
+                   ALU_GEU  = 5'd15,
+                   ALU_DIF  = 5'd16,   // custom-0: 4*a - b
+                   ALU_CIRC = 5'd17;   // custom-0: (a + b) & 0x7C
 
   wire signed [31:0] a_s;
   wire signed [31:0] b_s;
@@ -69,6 +76,10 @@ module espino_alu (
       ALU_AND:  result_o = operand_a_i & operand_b_i;
       ALU_SLT:  result_o = {31'b0, cmp_lt};
       ALU_SLTU: result_o = {31'b0, cmp_ltu};
+`ifdef USAR_CUSTOM
+      ALU_DIF:  result_o = {operand_a_i[29:0], 2'b00} - operand_b_i;   // 4*a: dos ceros a la derecha (solo cables)
+      ALU_CIRC: result_o = (operand_a_i + operand_b_i) & 32'h0000_007C; // máscara 124: índices 0, 4, ..., 124
+`endif
       // Shifts disabled to save LUTs
       // ALU_SLL:  result_o = operand_a_i << shamt;
       // ALU_SRL:  result_o = operand_a_i >> shamt;
