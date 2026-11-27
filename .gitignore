@@ -25,3 +25,8 @@ sim/sim
 build/
 !tb/practica.csv
 !resultados/**
+
+tb_p4
+tb_reset
+tb_sma
+tb_custom

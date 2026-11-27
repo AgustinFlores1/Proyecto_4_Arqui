@@ -148,3 +148,63 @@ def graficar_serie(precios: list[int], titulo: str, traders: list[Trader], refer
     Path(ruta).parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(ruta, dpi=150, bbox_inches="tight")                  # bbox_inches: que no se corte la leyenda
     plt.close(fig)
+
+
+def graficar_roofline(pico_ops: float, ancho_banda: float, kernels: list[tuple[str, float, float, str]],
+                      ruta: str | Path, titulo: str = "Roofline de Espino a 25 MHz") -> None:  # guarda el gráfico roofline del core con los kernels medidos
+    """
+    pico_ops     techo de cómputo del core, en MOps/s (operaciones útiles por segundo, en millones)
+    ancho_banda  techo de memoria, en MB/s (bytes por segundo que pueden moverse con cargas)
+    kernels      lista de (nombre, intensidad en op/B, rendimiento en MOps/s, nota) de cada versión del kernel
+    ruta         dónde guardar el PNG
+    titulo       título del gráfico
+
+    El techo es min(pico_ops, ancho_banda * intensidad): a la izquierda del punto de quiebre
+    manda la memoria (línea inclinada), a la derecha manda el cómputo (línea horizontal).
+    Los ejes son logarítmicos, como es habitual en un roofline.
+    """
+    quiebre = pico_ops / ancho_banda                                  # intensidad donde se juntan los dos techos (op/B)
+    x_min = min([quiebre] + [k[1] for k in kernels]) / 8              # márgenes del eje x alrededor de los puntos
+    x_max = max([quiebre] + [k[1] for k in kernels]) * 8
+    xs = [x_min * (x_max / x_min) ** (i / 200) for i in range(201)]  # 201 puntos espaciados en escala logarítmica
+    techo = [min(pico_ops, ancho_banda * x) for x in xs]             # el roofline
+
+    fig, ax = plt.subplots(figsize=(8, 5))
+    _estilo_recesivo(ax)
+    ax.grid(axis="x", color=GRILLA, linewidth=0.8)
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+
+    ax.plot(xs, techo, color=GRIS_PRECIO, linewidth=2)                # el techo del core
+    ax.axvline(quiebre, color=GRIS_REFERENCIA, linestyle=":", linewidth=1)
+    ax.text(x_min * 1.15, pico_ops * 1.12, f"Techo de cómputo: {pico_ops:g} MOps/s",
+            color=TEXTO_SECUNDARIO, fontsize=9)
+    ax.text(x_min * 1.15, ancho_banda * x_min * 1.25, f"Techo de memoria: {ancho_banda:.1f} MB/s",
+            color=TEXTO_SECUNDARIO, fontsize=9)
+    ax.text(quiebre * 1.08, x_min * ancho_banda * 0.9, f"quiebre\n{quiebre:.3f} op/B",
+            color=TEXTO_SECUNDARIO, fontsize=8)
+
+    for i, (nombre, intensidad, rendimiento, nota) in enumerate(kernels):
+        color = COLORES[i % len(COLORES)]
+        ax.scatter([intensidad], [rendimiento], s=70, color=color, edgecolor="white", linewidth=1.5, zorder=3)
+        etiqueta = f"{nombre}\n{rendimiento:.1f} MOps/s" + (f"\n{nota}" if nota else "")
+        misma_x = [k[2] for k in kernels if k[1] == intensidad and k[0] != nombre]   # otros puntos en la misma columna
+        if any(r > rendimiento for r in misma_x):
+            dy, va = -6, "top"                    # hay uno más arriba: la etiqueta va abajo
+        elif misma_x:
+            dy, va = 6, "bottom"                  # hay uno más abajo: la etiqueta va arriba
+        else:
+            dy, va = 0, "center"
+        ax.annotate(etiqueta, (intensidad, rendimiento), xytext=(8, dy), textcoords="offset points",
+                    va=va, fontsize=9, color=TEXTO)
+
+    todos_y = [k[2] for k in kernels] + [pico_ops]
+    ax.set_xlim(x_min, x_max)
+    ax.set_ylim(min(min(todos_y), ancho_banda * x_min) / 2, max(todos_y) * 2.5)
+    ax.set_xlabel("Intensidad operacional (operaciones útiles por byte de memoria)", color=TEXTO_SECUNDARIO)
+    ax.set_ylabel("Rendimiento (MOps/s)", color=TEXTO_SECUNDARIO)
+    ax.set_title(titulo, color=TEXTO, loc="left", fontsize=12)
+
+    Path(ruta).parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(ruta, dpi=150, bbox_inches="tight")
+    plt.close(fig)
