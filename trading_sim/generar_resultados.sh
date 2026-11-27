@@ -27,4 +27,6 @@ python -u tabla_final.py > /dev/null                   # tabla_final.md y .csv
 echo "===== Roofline ====="
 python -u roofline.py
 
+python -u tamano_orden.py | tee $CANDIDATOS/tamano_orden.txt
+
 echo "Listo: resultados en ../resultados/"

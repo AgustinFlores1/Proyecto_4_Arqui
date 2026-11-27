@@ -53,7 +53,7 @@ class Market:
             able_to_buy = (trader.cash - self.commision) // price
             stocks_purchased = min(stock_quantity, able_to_buy)
 
-            if stock_quantity > 0:
+            if stocks_purchased > 0:                   # como el testbench: sin acciones compradas no hay orden ni comisión
                 trader.apply_purchase(stocks_purchased, price)
 
         elif action == VENDER:
