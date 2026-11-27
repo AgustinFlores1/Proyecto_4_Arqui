@@ -1,0 +1,5 @@
+estrategia               vs B&H  vs no op.  órdenes  pérd. máx   estrés
+16 o nada                  +678       +357      139       1372     -438
+32 o nada                 +1732      +1411      139       2437     -377
+63 o nada (proyecto)      +3873      +3553      139       4282     -133
+acumular 63               +4754      +4434      220       5332     -599
